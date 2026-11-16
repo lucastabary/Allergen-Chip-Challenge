@@ -26,6 +26,9 @@ overestimated severity and did poorly on food and venom allergies.
 - `src/acc/`: installable package with the shared code. Everything that several notebooks need
   (loading, cleaning, feature engineering) goes here so the three of us share one pipeline.
   - `data.py`: download, `load_raw()`, `split_columns()`.
+  - `allergens.py`: IgE column -> source species and allergen family (`family_of()`, `sort_by_family()`).
+    Families are by *source* (pollen, food...); PCA showed that *protein* families (PR-10, tropomyosin,
+    storage proteins) drive co-sensitization, which this mapping does not encode yet.
 - `notebooks/`: exploration. Name them `NN_initials_topic.ipynb` (e.g. `01_lt_eda.ipynb`).
 - `data/raw/`, `data/processed/`: git-ignored, never commit data.
 - `reports/figures/`: exported figures and deliverables.
