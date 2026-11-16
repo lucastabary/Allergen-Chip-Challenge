@@ -37,6 +37,8 @@ overestimated severity and did poorly on food and venom allergies.
 - 4,271 rows × 256 columns: 15 clinical columns, then 241 IgE columns (float, kUA/L for ALEX, ISU for ISAC).
 - Clinical columns are read as **strings** because some are multi-coded (`"1,3"` = codes 1 and 3,
   `"6, 7"` with a space also occurs). Never parse them with a global decimal conversion.
+- 52 IgE values are exactly `-1` (36 patients, 35 on ISAC v2): impossible concentrations, so `load_raw()`
+  turns them into NaN. These are the only NaN inside a chip's own allergen set.
 - Code `9` means "not provided" (`Non renseigné`) in the clinical categorical columns.
 - `Chip_Type`: ISAC_V1 (2,351), ALEX (1,139), ISAC_V2 (781). ISAC chips cover 112 allergens, ALEX 223,
   so a NaN in an IgE column is usually structural (allergen not on that chip), not a missing measurement.

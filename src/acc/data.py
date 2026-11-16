@@ -68,6 +68,9 @@ def load_raw() -> pd.DataFrame:
     df = pd.read_csv(DATA_FILE, sep=";", encoding="utf-8-sig", dtype=str)
     clinical, ige = split_columns(df)
     df[ige] = df[ige].apply(lambda s: pd.to_numeric(s.str.replace(",", ".")))
+    # 52 IgE values are exactly -1 (36 patients, mostly ISAC v2): an impossible
+    # concentration, treated as an invalid measurement.
+    df[ige] = df[ige].mask(df[ige] < 0)
     df["Age"] = pd.to_numeric(df["Age"].str.replace(",", "."))
     return df.copy()  # defragment after the column-wise conversions
 

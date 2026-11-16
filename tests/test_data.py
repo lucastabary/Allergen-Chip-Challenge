@@ -17,5 +17,6 @@ def test_types():
     df = load_raw()
     _, ige = split_columns(df)
     assert all(df[c].dtype.kind == "f" for c in ige)
+    assert df[ige].min().min() >= 0  # -1 sentinels turned into NaN
     # multi-coded clinical values must survive as text, not be parsed as decimals
     assert "1,3" in set(df["Treatment_of_rhinitis"].dropna())
