@@ -69,7 +69,7 @@ def load_raw() -> pd.DataFrame:
     clinical, ige = split_columns(df)
     df[ige] = df[ige].apply(lambda s: pd.to_numeric(s.str.replace(",", ".")))
     df["Age"] = pd.to_numeric(df["Age"].str.replace(",", "."))
-    return df
+    return df.copy()  # defragment after the column-wise conversions
 
 
 def split_columns(df: pd.DataFrame) -> tuple[list[str], list[str]]:
