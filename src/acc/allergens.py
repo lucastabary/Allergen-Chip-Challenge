@@ -9,7 +9,11 @@ Reference for the codes: https://www.allergen.org
 
 from __future__ import annotations
 
+import functools
 import re
+from importlib import resources
+
+import pandas as pd
 
 GRASS = "grass pollen"
 TREE = "tree pollen"
@@ -197,3 +201,95 @@ def family_of(column: str) -> str:
 def sort_by_family(columns: list[str]) -> list[str]:
     """Order columns by family (FAMILIES order), then by source and name."""
     return sorted(columns, key=lambda c: (FAMILIES.index(family_of(c)), source_of(c), c))
+
+
+# ---------------------------------------------------------------------------
+# WHO/IUIS names and protein families
+# ---------------------------------------------------------------------------
+#
+# `resources/iuis_allergens.tsv` is an extract of the WHO/IUIS Allergen Nomenclature
+# database (https://www.allergen.org, allergen table, retrieved 2026-11-16) restricted to
+# the 241 IgE columns of the ACC data. `origin` tells where each row comes from:
+#   iuis          the column is an official IUIS allergen (name, biochemical name, exposure)
+#   iuis_species  whole extract: only the source species is in IUIS
+#   manual        not in IUIS (or IUIS entry incomplete), filled by hand
+# Please cite https://www.allergen.org when using these names.
+
+# (regex on the IUIS biochemical name, protein family), first match wins
+_PROTEIN_FAMILY_RULES: list[tuple[str, str]] = [
+    (r"PR-10", "PR-10"),
+    (r"lipid transfer", "nsLTP"),
+    (r"2S|conglutin", "2S albumin"),
+    (r"vicilin|7S", "7S vicilin"),
+    (r"legumin|11S|glycinin", "11S legumin"),
+    (r"profilin", "Profilin"),
+    (r"polcalcin", "Polcalcin"),
+    (r"tropomyosin", "Tropomyosin"),
+    (r"parvalbumin", "Parvalbumin"),
+    (r"serum albumin", "Serum albumin"),
+    (r"lipocalin|calycin|odorant binding", "Lipocalin"),
+    (r"uteroglobin", "Uteroglobin"),
+    (r"NPC2", "NPC2 (mite group 2)"),
+    (r"cysteine protease", "Cysteine protease"),
+    (r"arginine kinase", "Arginine kinase"),
+    (r"group 5/21", "Mite group 5/21"),
+    (r"beta-expansin", "Beta-expansin"),
+    (r"ole e 1", "Ole e 1-like"),
+    (r"pectate lyase", "Pectate lyase"),
+    (r"defensin", "Defensin-like"),
+    (r"thaumatin", "Thaumatin-like"),
+    (r"oleosin", "Oleosin"),
+    (r"antigen 5", "Antigen 5"),
+    (r"casein", "Casein"),
+    (r"transferrin|lactoferrin", "Transferrin"),
+    (r"hevein", "Hevein"),
+    (r"galactose|cross-reactive carbohydrate", "Carbohydrate (CCD, alpha-gal)"),
+]
+
+
+@functools.cache
+def iuis_table() -> pd.DataFrame:
+    """WHO/IUIS information for every IgE column, indexed by column name."""
+    path = resources.files("acc").joinpath("resources/iuis_allergens.tsv")
+    with resources.as_file(path) as p:
+        table = pd.read_csv(p, sep="\t", dtype=str, keep_default_na=False).set_index("column")
+    table["protein_family"] = table["biochemical_name"].map(_protein_family)
+    return table
+
+
+def _protein_family(biochemical_name: str) -> str:
+    if not biochemical_name:
+        return "unknown"
+    for pattern, family in _PROTEIN_FAMILY_RULES:
+        if re.search(pattern, biochemical_name, flags=re.IGNORECASE):
+            return family
+    return "other"
+
+
+def protein_family_of(column: str) -> str:
+    """Protein family of an IgE column ('PR-10', 'nsLTP', '2S albumin'...).
+
+    'unknown' for whole extracts and for components without a biochemical name.
+    """
+    return iuis_table().loc[column, "protein_family"]
+
+
+def display_name(column: str) -> str:
+    """Readable label of an IgE column.
+
+    E.g. 'Der p 2 (European house dust mite)' or 'Cyn d extract (Bermuda grass)'.
+    """
+    row = iuis_table().loc[column]
+    common = row["common_name"] or column
+    if row["iuis_name"]:
+        return f"{row['iuis_name']} ({common})"
+    if row["biochemical_name"]:
+        return f"{column.replace('_', ' ')} ({common})"
+    return f"{source_of(column).replace('_', ' ')} extract ({common})"
+
+
+def describe(column: str) -> dict[str, str]:
+    """Everything known about an IgE column: IUIS info, source family and protein family."""
+    info = iuis_table().loc[column].to_dict()
+    info["source_family"] = family_of(column)
+    return {"column": column, **info}

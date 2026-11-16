@@ -13,6 +13,9 @@ analyses, dataviz, and interpretable statistical models are all suggested. Resul
 Background: the original ACC competition (2023) winner reached F1 ≈ 0.79 for allergy presence, but
 overestimated severity and did poorly on food and venom allergies.
 
+Full summary of the challenge (context, question, data warnings, suggested deliverables):
+@docs/challenge.md
+
 ## Environment and commands
 
 - Python 3.12, managed with `uv` (`pyproject.toml` + `uv.lock`, both committed).
@@ -26,9 +29,13 @@ overestimated severity and did poorly on food and venom allergies.
 - `src/acc/`: installable package with the shared code. Everything that several notebooks need
   (loading, cleaning, feature engineering) goes here so the three of us share one pipeline.
   - `data.py`: download, `load_raw()`, `split_columns()`.
-  - `allergens.py`: IgE column -> source species and allergen family (`family_of()`, `sort_by_family()`).
-    Families are by *source* (pollen, food...); PCA showed that *protein* families (PR-10, tropomyosin,
-    storage proteins) drive co-sensitization, which this mapping does not encode yet.
+  - `allergens.py`: IgE column -> source family (`family_of()`, `sort_by_family()`: pollen, food...)
+    and WHO/IUIS info (`iuis_table()`, `display_name()`, `protein_family_of()`, `describe()`).
+    Protein families (PR-10, nsLTP, 2S albumin, tropomyosin...) are derived by regex from the IUIS
+    biochemical names; PCA showed they drive co-sensitization. Whole extracts get `unknown`.
+  - `resources/iuis_allergens.tsv`: extract of the WHO/IUIS database (allergen.org) for our 241 columns,
+    with an `origin` column (`iuis`, `iuis_species`, `manual`). allergen.org blocks scripted downloads,
+    so this extract is committed; cite https://www.allergen.org when using it.
 - `notebooks/`: exploration. Name them `NN_initials_topic.ipynb` (e.g. `01_lt_eda.ipynb`).
 - `data/raw/`, `data/processed/`: git-ignored, never commit data.
 - `reports/figures/`: exported figures and deliverables.

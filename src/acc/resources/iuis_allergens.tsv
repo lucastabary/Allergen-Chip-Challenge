@@ -1,0 +1,242 @@
+column	iuis_name	species	common_name	biochemical_name	exposure	origin
+Act_d_1	Act d 1	Actinidia deliciosa	Green kiwi fruit	Cysteine protease (actinidin)	Food	iuis
+Act_d_2	Act d 2	Actinidia deliciosa	Green kiwi fruit	Thaumatin-like protein	Food	iuis
+Act_d_5	Act d 5	Actinidia deliciosa	Green kiwi fruit	Kiwellin	Food	iuis
+Act_d_8	Act d 8	Actinidia deliciosa	Green kiwi fruit	Pathogenesis-related protein, PR-10, Bet v 1 family member	Food	iuis
+Aln_g_1	Aln g 1	Alnus glutinosa	Alder	Pathogenesis-related protein, PR-10, Bet v 1 family member	Airway	iuis
+Alt_a_1	Alt a 1	Alternaria alternata	Alternaria plant rot fungus	Alt a 1 family (beta-barrel protein)	Airway	manual
+Alt_a_6	Alt a 6	Alternaria alternata	Alternaria plant rot fungus	Enolase	Airway	iuis
+Amb_a_1	Amb a 1	Ambrosia artemisiifolia	Short ragweed	Pectate lyase	Airway	iuis
+Ana_o_2	Ana o 2	Anacardium occidentale	Cashew	Legumin-like protein	Food	iuis
+Ani_s_1	Ani s 1	Anisakis simplex	Herring worm	unknown function, similar to Kunitz serine protease inhibitors	Food	iuis
+Ani_s_3	Ani s 3	Anisakis simplex	Herring worm	Tropomyosin	Food	iuis
+Api_g_1	Api g 1	Apium graveolens	Celery	Pathogenesis-related protein, PR-10, Bet v 1 family member	Food	iuis
+Api_m_1	Api m 1	Apis mellifera	Honey bee	Phospholipase A2	Injection	iuis
+Api_m_4	Api m 4	Apis mellifera	Honey bee	Melittin	Injection	iuis
+Ara_h_1	Ara h 1	Arachis hypogaea	Peanut, groundnut	Vicilin, 7S globulin seed storage protein	Food	iuis
+Ara_h_2	Ara h 2	Arachis hypogaea	Peanut, groundnut	Conglutin (2S albumin)	Food	iuis
+Ara_h_3	Ara h 3	Arachis hypogaea	Peanut, groundnut	Cupin (Legumin-type, 11S globulin, Glycinin)	Food	iuis
+Ara_h_6	Ara h 6	Arachis hypogaea	Peanut, groundnut	Conglutin (2S albumin)	Food	iuis
+Ara_h_8	Ara h 8	Arachis hypogaea	Peanut, groundnut	Pathogenesis-related protein, PR-10, Bet v 1 family member	Food	iuis
+Ara_h_9	Ara h 9	Arachis hypogaea	Peanut, groundnut	Non-specific lipid transfer protein type 1 (nsLTP1)	Food	iuis
+Art_v_1	Art v 1	Artemisia vulgaris	Mugwort, wormwood	Defensin-like protein linked to polyproline-rich region	Airway	iuis
+Art_v_3	Art v 3	Artemisia vulgaris	Mugwort, wormwood	Non-specific lipid transfer protein type 1 (nsLTP1)	Airway	iuis
+Asp_f_1	Asp f 1	Aspergillus fumigatus	Common mold	Mitogillin family	Airway	iuis
+Asp_f_3	Asp f 3	Aspergillus fumigatus	Common mold	Peroxysomal protein	Airway	iuis
+Asp_f_6	Asp f 6	Aspergillus fumigatus	Common mold	Mn superoxide dismutase	Airway	iuis
+Ber_e_1	Ber e 1	Bertholletia excelsa	Brazil nut	2S sulfur-rich seed storage albumin	Food	iuis
+Bet_v_1	Bet v 1	Betula verrucosa (Betula pendula)	European white birch	Pathogenesis-related protein, PR-10, Bet v 1 family member	Airway	iuis
+Bet_v_2	Bet v 2	Betula verrucosa (Betula pendula)	European white birch	Profilin	Airway	iuis
+Bet_v_4	Bet v 4	Betula verrucosa (Betula pendula)	European white birch	Polcalcin	Airway	iuis
+Bla_g_1	Bla g 1	Blattella germanica	German cockroach	Nitrile specifier, microvilli-like protein with unknown function	Airway	iuis
+Bla_g_2	Bla g 2	Blattella germanica	German cockroach	Inactive aspartic protease	Airway	iuis
+Bla_g_5	Bla g 5	Blattella germanica	German cockroach	Glutathione S-transferase (GST) class sigma	Airway	iuis
+Bla_g_7	Bla g 7	Blattella germanica	German cockroach	Tropomyosin	Airway	iuis
+Blo_t_5	Blo t 5	Blomia tropicalis	Tropical house dust mite	Group 5/21 allergen	Airway	iuis
+Bos_d_4	Bos d 4	Bos domesticus (Bos taurus)	Domestic cattle	Alpha-lactalbumin	Food	iuis
+Bos_d_5	Bos d 5	Bos domesticus (Bos taurus)	Domestic cattle	Beta-lactoglobulin	Food	iuis
+Bos_d_6	Bos d 6	Bos domesticus (Bos taurus)	Domestic cattle	Serum albumin	Food	iuis
+Bos_d_8	Bos d 8	Bos domesticus (Bos taurus)	Domestic cattle	Caseins	Food	iuis
+Bos_d_Lactoferrin		Bos domesticus (Bos taurus)	Domestic cattle	Lactoferrin (transferrin family)	Food	manual
+Can_f_1	Can f 1	Canis familiaris (C. lupus familiaris)	Domestic dog	Lipocalin	Airway	iuis
+Can_f_2	Can f 2	Canis familiaris (C. lupus familiaris)	Domestic dog	Lipocalin	Airway	iuis
+Can_f_3	Can f 3	Canis familiaris (C. lupus familiaris)	Domestic dog	Serum albumin	Airway	iuis
+Can_f_5	Can f 5	Canis familiaris (C. lupus familiaris)	Domestic dog	Arginine esterase, prostatic kallikrein	Airway	iuis
+Che_a_1	Che a 1	Chenopodium album	Lamb's quarters, white goosefoot	Ole e 1 homologue	Airway	iuis
+Cla_h_8	Cla h 8	Cladosporium herbarum	Fungus of plants	Mannitol dehydrogenase	Airway	iuis
+Cor_a_1.0101	Cor a 1.0101	Corylus avellana	Hazel	Pathogenesis-related protein, PR-10, Bet v 1 family member	Airway	iuis
+Cor_a_1.0401	Cor a 1.0401	Corylus avellana	Hazelnut	Pathogenesis-related protein, PR-10, Bet v 1 family member	Food	iuis
+Cor_a_8	Cor a 8	Corylus avellana	Hazelnut	Non-specific lipid transfer protein type 1 (nsLTP1)	Food	iuis
+Cor_a_9	Cor a 9	Corylus avellana	Hazelnut	11S seed storage globulin (legumin-like)	Food	iuis
+Cry_j_1	Cry j 1	Cryptomeria japonica	Sugi, Japanese cedar	Pectate lyase	Airway	iuis
+Cup_a_1	Cup a 1	Cupressus arizonica	Cypress	Pectate lyase	Airway	iuis
+Cyn_d_1	Cyn d 1	Cynodon dactylon	Bermuda grass	Beta-expansin	Airway	iuis
+Der_f_1	Der f 1	Dermatophagoides farinae	American house dust mite	Cysteine protease	Airway	iuis
+Der_f_2	Der f 2	Dermatophagoides farinae	American house dust mite	NPC2 family; MD-2-related lipid recognition (ML) domain containing protein	Airway	iuis
+Der_p_1	Der p 1	Dermatophagoides pteronyssinus	European house dust mite	Cysteine protease	Airway	iuis
+Der_p_10	Der p 10	Dermatophagoides pteronyssinus	European house dust mite	Tropomyosin	Airway	iuis
+Der_p_2	Der p 2	Dermatophagoides pteronyssinus	European house dust mite	NPC2 family; MD-2-related lipid recognition (ML) domain containing protein	Airway	iuis
+Equ_c_1	Equ c 1	Equus caballus	Domestic horse	Lipocalin	Airway	iuis
+Equ_c_3	Equ c 3	Equus caballus	Domestic horse	Serum albumin	Airway	iuis
+Fag_e_2	Fag e 2	Fagopyrum esculentum	Common buckwheat	2S albumin	Food	iuis
+Fel_d_1	Fel d 1	Felis domesticus (F. catus)	Domestic cat	Uteroglobin (chain 1)	Airway	iuis
+Fel_d_2	Fel d 2	Felis domesticus (F. catus)	Domestic cat	Serum albumin	Airway	iuis
+Fel_d_4	Fel d 4	Felis domesticus (F. catus)	Domestic cat	Lipocalin	Airway	iuis
+Gad_c_1	Gad c 1	Gadus callarias	Baltic cod	Beta-parvalbumin	Food	iuis
+Gal_d_1	Gal d 1	Gallus domesticus (G. gallus)	Chicken	Ovomucoid	Food	iuis
+Gal_d_2	Gal d 2	Gallus domesticus (G. gallus)	Chicken	Ovalbumin	Food	iuis
+Gal_d_3	Gal d 3	Gallus domesticus (G. gallus)	Chicken	Ovotransferrin	Food	iuis
+Gal_d_5	Gal d 5	Gallus domesticus (G. gallus)	Chicken	Serum albumin, alpha-livetin	Food	iuis
+Gly_m_4	Gly m 4	Glycine max	Soybean	Pathogenesis-related protein, PR-10, Bet v 1 family member	Food	iuis
+Gly_m_5	Gly m 5	Glycine max	Soybean	Beta-conglycinin (vicilin, 7S globulin)	Food	iuis
+Gly_m_6	Gly m 6	Glycine max	Soybean	Glycinin (legumin, 11S globulin)	Food	iuis
+Hev_b_1	Hev b 1	Hevea brasiliensis	Para rubber tree (latex)	Rubber elongation factor	Contact	iuis
+Hev_b_3	Hev b 3	Hevea brasiliensis	Para rubber tree (latex)	Small rubber particle protein (SRPP)	Contact	iuis
+Hev_b_5	Hev b 5	Hevea brasiliensis	Para rubber tree (latex)	Acidic protein, unknown function	Contact	iuis
+Hev_b_6.01	Hev b 6.01	Hevea brasiliensis	Para rubber tree (latex)	Hevein precursor	Contact	iuis
+Hev_b_8	Hev b 8	Hevea brasiliensis	Para rubber tree (latex)	Profilin	Contact	iuis
+Jug_r_1	Jug r 1	Juglans regia	English walnut	2S albumin seed storage protein	Food	iuis
+Jug_r_2	Jug r 2	Juglans regia	English walnut	Vicilin (7S globulin) seed storage protein	Food	iuis
+Jug_r_3	Jug r 3	Juglans regia	English walnut	Non-specific lipid transfer protein type 1 (nsLTP1)	Food	iuis
+Lep_d_2	Lep d 2	Lepidoglyphus destructor	Sugar mite	NPC2 family; MD-2-related lipid recognition (ML) domain containing protein	Airway	iuis
+Mal_d_1	Mal d 1	Malus domestica	Apple	Pathogenesis-related protein, PR-10, Bet v 1 family member	Food	iuis
+Mer_a_1	Mer a 1	Mercurialis annua	Annual mercury	Profilin	Airway	iuis
+Mus_m_1	Mus m 1	Mus musculus	House mouse	Lipocalin and urinary prealbumin	Airway	iuis
+MUXF3				Cross-reactive carbohydrate determinant (CCD, bromelain glycan)		manual
+Ole_e_1	Ole e 1	Olea europaea	Olive	Common olive group 1 (Ole e 1 family)	Airway	iuis
+Ole_e_7	Ole e 7	Olea europaea	Olive	Putative non-specific lipid transfer protein	Airway	iuis
+Ole_e_9	Ole e 9	Olea europaea	Olive	Beta-1-3 glucanase	Airway	iuis
+Par_j_2	Par j 2	Parietaria judaica	Pellitory of the wall	Non-specific lipid transfer protein type 1 (nsLTP1)	Airway	iuis
+Pen_m_1	Pen m 1	Penaeus monodon	Black tiger shrimp	Tropomyosin	Food	iuis
+Pen_m_2	Pen m 2	Penaeus monodon	Black tiger shrimp	Arginine kinase	Food	iuis
+Pen_m_4	Pen m 4	Penaeus monodon	Black tiger shrimp	Sarcoplasmic calcium binding protein	Food	iuis
+Phl_p_1	Phl p 1	Phleum pratense	Timothy	Beta-expansin	Airway	iuis
+Phl_p_11	Phl p 11	Phleum pratense	Timothy	Ole e 1-related protein	Airway	iuis
+Phl_p_12	Phl p 12	Phleum pratense	Timothy	Profilin	Airway	iuis
+Phl_p_2	Phl p 2	Phleum pratense	Timothy	Grass group II/III	Airway	iuis
+Phl_p_4	Phl p 4	Phleum pratense	Timothy	Berberine bridge enzyme	Airway	iuis
+Phl_p_5	Phl p 5	Phleum pratense	Timothy	Grass group 5	Airway	manual
+Phl_p_6	Phl p 6	Phleum pratense	Timothy	Grass group 6	Airway	manual
+Phl_p_7	Phl p 7	Phleum pratense	Timothy	Polcalcin	Airway	iuis
+Pla_a_1	Pla a 1	Platanus acerifolia (Platanus x hispanica)	London plane tree	Putative invertase inhibitor	Airway	iuis
+Pla_a_2	Pla a 2	Platanus acerifolia (Platanus x hispanica)	London plane tree	Polygalacturonase	Airway	iuis
+Pla_a_3	Pla a 3	Platanus acerifolia (Platanus x hispanica)	London plane tree	Non-specific lipid transfer protein type 1 (nsLTP1)	Airway	iuis
+Pla_l_1	Pla l 1	Plantago lanceolata	English plantain	Ole e 1-related protein	Airway	iuis
+Pol_d_5	Pol d 5	Polistes dominulus	Mediterranean paper wasp	Antigen 5	Injection	iuis
+Pru_p_1	Pru p 1	Prunus persica	Peach	Pathogenesis-related protein, PR-10, Bet v 1 family member	Food	iuis
+Pru_p_3	Pru p 3	Prunus persica	Peach	Non-specific lipid transfer protein type 1 (nsLTP1)	Food	iuis
+Sal_k_1	Sal k 1	Salsola kali	Prickly saltwort	Pectin methylesterase	Airway	iuis
+Ses_i_1	Ses i 1	Sesamum indicum	Sesame	2S albumin	Food	iuis
+Tri_a_14	Tri a 14	Triticum aestivum	Wheat	Non-specific lipid transfer protein type 1 (nsLTP1)	Food	iuis
+Tri_a_19.0101	Tri a 19.0101	Triticum aestivum	Wheat	Omega-5 gliadin	Food	iuis
+Tri_a_aA_TI		Triticum aestivum	Wheat	Alpha-amylase/trypsin inhibitor	Food	manual
+Ves_v_5	Ves v 5	Vespula vulgaris	Yellowjacket, common wasp	Antigen 5	Injection	iuis
+Cor_a_14	Cor a 14	Corylus avellana	Hazelnut	2S albumin	Food	iuis
+Can_f_4	Can f 4	Canis familiaris (C. lupus familiaris)	Domestic dog	Lipocalin	Airway	iuis
+Hev_b_6	Hev b 6	Hevea brasiliensis	Para rubber tree (latex)	Hevein precursor	Contact	iuis
+Der_p_23	Der p 23	Dermatophagoides pteronyssinus	European house dust mite	Peritrophin-like protein domain	Airway	iuis
+Alpha-Gal			Mammalian meat	Galactose-alpha-1,3-galactose (carbohydrate)	Food	manual
+Ana_o_3	Ana o 3	Anacardium occidentale	Cashew	2S albumin	Food	iuis
+Can_f_6	Can f 6	Canis familiaris (C. lupus familiaris)	Domestic dog	Lipocalin	Airway	iuis
+Aca_m			Unidentified extract			manual
+Aca_s		Acarus siro	Flour mite			iuis_species
+Ach_d		Acheta domesticus	House cricket		Food	manual
+Act_d_10	Act d 10	Actinidia deliciosa	Green kiwi fruit	Non-specific lipid transfer protein type 1 (nsLTP1)	Food	iuis
+Ail_a		Ailanthus altissima	Tree of heaven		Airway	manual
+All_c		Allium cepa	Onion		Food	manual
+All_s		Allium sativum	Garlic		Food	manual
+Aln_g_4	Aln g 4	Alnus glutinosa	Alder	Polcalcin	Airway	iuis
+Ama_r		Amaranthus retroflexus	Redroot pigweed			iuis_species
+Amb_a		Ambrosia artemisiifolia	Short ragweed			iuis_species
+Amb_a_4	Amb a 4	Ambrosia artemisiifolia	Short ragweed	Defensin-like protein linked to polyproline-rich region, homologue of Art v 1	Airway	iuis
+Ana_o		Anacardium occidentale	Cashew			iuis_species
+Api_g_2	Api g 2	Apium graveolens	Celery	Non-specific lipid transfer protein type 1 (nsLTP1)	Food	iuis
+Api_g_6	Api g 6	Apium graveolens	Celery	Non-specific lipid transfer protein type 2 (nsLTP2)	Food	iuis
+Api_m		Apis mellifera	Honey bee			iuis_species
+Api_m_10	Api m 10	Apis mellifera	Honey bee	Icarapin variant 2, carbohydrate-rich protein	Injection	iuis
+Ara_h_15	Ara h 15	Arachis hypogaea	Peanut, groundnut	Oleosin 3	Food	iuis
+Arg_r_1	Arg r 1	Argas reflexus	Pigeon tick	Lipocalin	Injection	manual
+Art_v		Artemisia vulgaris	Mugwort, wormwood			iuis_species
+Asp_f_4	Asp f 4	Aspergillus fumigatus	Common mold	Protein of unknown function	Airway	iuis
+Ave_s		Avena sativa	Oat		Food	manual
+Ber_e		Bertholletia excelsa	Brazil nut			iuis_species
+Bet_v_6	Bet v 6	Betula verrucosa (Betula pendula)	European white birch	Phenylcoumaran benzylic ether reductase	Airway	iuis
+Bla_g_4	Bla g 4	Blattella germanica	German cockroach	Calycin, lipocalin	Airway	iuis
+Bla_g_9	Bla g 9	Blattella germanica	German cockroach	Arginine kinase	Airway	iuis
+Blo_t_10	Blo t 10	Blomia tropicalis	Tropical house dust mite	Tropomyosin	Airway	iuis
+Blo_t_21	Blo t 21	Blomia tropicalis	Tropical house dust mite	Group 5/21 allergen	Airway	iuis
+Bos_d_2	Bos d 2	Bos domesticus (Bos taurus)	Domestic cattle	Lipocalin	Airway	iuis
+Bos_d_meat		Bos domesticus (Bos taurus)	Beef			iuis_species
+Bos_d_milk		Bos domesticus (Bos taurus)	Cow's milk			iuis_species
+Bro_pa		Broussonetia papyrifera	Paper mulberry		Airway	manual
+Cam_d		Camelus dromedarius	Dromedary camel		Airway	manual
+Can_f_Fd1		Canis familiaris (C. lupus familiaris)	Domestic dog	Uteroglobin (Fel d 1-like)	Airway	manual
+Can_f_male_urine		Canis familiaris (C. lupus familiaris)	Domestic dog (male urine)			iuis_species
+Can_s		Cannabis sativa	Indian hemp			iuis_species
+Can_s_3	Can s 3	Cannabis sativa	Indian hemp	Non-specific lipid transfer protein type 1 (nsLTP1)	Airway	iuis
+Cap_a		Capsicum annuum	Chili, bell pepper			iuis_species
+Cap_h_epithelia		Capra hircus	Goat (epithelia)		Airway	manual
+Cap_h_milk		Capra hircus	Goat's milk		Food	manual
+Car_c		Carcinus maenas	Shore crab (assumed)		Food	manual
+Car_i		Carya illinoinensis	Pecan			iuis_species
+Car_p		Carica papaya	Papaya		Food	manual
+Cav_p_1	Cav p 1	Cavia porcellus	Guinea pig	Lipocalin	Airway	iuis
+Che_a		Chenopodium album	Lamb's quarters, white goosefoot			iuis_species
+Che_q		Chenopodium quinoa	Quinoa		Food	manual
+Chi_spp.		Chironomus spp.	Non-biting midge		Airway	manual
+Cic_a		Cicer arietinum	Chickpea			iuis_species
+Cit_s		Citrus sinensis	Sweet orange			iuis_species
+Cla_h		Cladosporium herbarum	Fungus of plants			iuis_species
+Clu_h		Clupea harengus	Atlantic herring			iuis_species
+Clu_h_1	Clu h 1	Clupea harengus	Atlantic herring	Beta-parvalbumin	Food	iuis
+Cor_a_1.0103	Cor a 1.0103	Corylus avellana	Hazel	Pathogenesis-related protein, PR-10, Bet v 1 family member	Airway	iuis
+Cor_a_11	Cor a 11	Corylus avellana	Hazelnut	7S seed storage globulin (vicilin-like)	Food	iuis
+Cor_a_12_RUO	Cor a 12	Corylus avellana	Hazelnut	17 kDa oleosin	Food	iuis
+Cor_a_pollen		Corylus avellana	Hazel pollen			iuis_species
+Cra_c_6	Cra c 6	Crangon crangon	North Sea shrimp	Troponin C	Food	iuis
+Cuc_m_2	Cuc m 2	Cucumis melo	Muskmelon	Profilin	Food	iuis
+Cuc_p		Cucurbita pepo	Pumpkin		Food	manual
+Cup_s		Cupressus sempervirens	Common cypress			iuis_species
+Cyn_d		Cynodon dactylon	Bermuda grass			iuis_species
+Cyp_c_1	Cyp c 1	Cyprinus carpio	Common carp	Beta-parvalbumin	Food	iuis
+Dau_c		Daucus carota	Carrot			iuis_species
+Dau_c_1	Dau c 1	Daucus carota	Carrot	Pathogenesis-related protein, PR-10, Bet v 1 family member	Food	iuis
+Der_p_11	Der p 11	Dermatophagoides pteronyssinus	European house dust mite	Paramyosin	Airway	iuis
+Der_p_20	Der p 20	Dermatophagoides pteronyssinus	European house dust mite	Arginine kinase	Airway	iuis
+Der_p_21	Der p 21	Dermatophagoides pteronyssinus	European house dust mite	Group 5/21 allergen	Airway	iuis
+Der_p_5	Der p 5	Dermatophagoides pteronyssinus	European house dust mite	Group 5/21 allergen	Airway	iuis
+Der_p_7	Der p 7	Dermatophagoides pteronyssinus	European house dust mite	Bactericidal permeability-increasing like protein	Airway	iuis
+Dol_spp		Dolichovespula spp.	Hornet		Injection	manual
+Equ_c_4	Equ c 4	Equus caballus	Domestic horse	Latherin	Airway	iuis
+Equ_c_meat		Equus caballus	Horse meat			iuis_species
+Equ_c_milk		Equus caballus	Horse milk			iuis_species
+Fag_e		Fagopyrum esculentum	Common buckwheat			iuis_species
+Fag_s_1	Fag s 1	Fagus sylvatica	European beech	Pathogenesis-related protein, PR-10, Bet v 1 family member	Airway	iuis
+Fel_d_7	Fel d 7	Felis domesticus (F. catus)	Domestic cat	Lipocalin	Airway	iuis
+Fic_b		Ficus benjamina	Weeping fig		Airway	manual
+Fic_c		Ficus carica	Common fig			iuis_species
+Fra_a_1+3	Fra a 1 + Fra a 3	Fragaria ananassa	Strawberry	PR-10 (Fra a 1) + non-specific lipid transfer protein (Fra a 3)	Food	manual
+Fra_e		Fraxinus excelsior	European ash			iuis_species
+Fra_e_1	Fra e 1	Fraxinus excelsior	European ash	Ole e 1-like protein family member	Airway	iuis
+Gad_m		Gadus morhua	Atlantic cod			iuis_species
+Gad_m_1	Gad m 1	Gadus morhua	Atlantic cod	Beta-parvalbumin	Food	iuis
+Gad_m_2+3	Gad m 2 + Gad m 3	Gadus morhua	Atlantic cod	Beta-enolase (Gad m 2) + aldolase (Gad m 3)	Food	manual
+Gal_d_4	Gal d 4	Gallus domesticus (G. gallus)	Chicken	Lysozyme C	Food	iuis
+Gal_d_meat		Gallus domesticus (G. gallus)	Chicken meat			iuis_species
+Gal_d_white		Gallus domesticus (G. gallus)	Egg white			iuis_species
+Gal_d_yolk		Gallus domesticus (G. gallus)	Egg yolk			iuis_species
+Gly_d_2	Gly d 2	Glycyphagus domesticus	Storage mite	NPC2 family; MD-2-related lipid recognition (ML) domain containing protein	Airway	iuis
+Gly_m_8	Gly m 8	Glycine max	Soybean	2S albumin	Food	iuis
+Hel_a		Helianthus annuus	Sunflower			iuis_species
+Hev_b_11	Hev b 11	Hevea brasiliensis	Para rubber tree (latex)	Class I chitinase	Contact	iuis
+Hev_b_6.02	Hev b 6.02	Hevea brasiliensis	Para rubber tree (latex)	Hevein precursor	Contact	iuis
+Hom_g		Homarus gammarus	European lobster		Food	manual
+Hom_s_LF		Homo sapiens	Human lactoferrin	Lactoferrin (transferrin family)		manual
+Hor_v		Hordeum vulgare	Barley			iuis_species
+Jug_r_4	Jug r 4	Juglans regia	English walnut	11S globulin seed storage protein	Food	iuis
+Jug_r_6	Jug r 6	Juglans regia	English walnut	7S globulin seed storage protein, vicilin-like protein	Food	iuis
+Jug_r_pollen		Juglans regia	Walnut pollen			iuis_species
+Jun_a		Juniperus ashei	Mountain cedar			iuis_species
+Len_c		Lens culinaris	Lentil			iuis_species
+Lit_s		Litopenaeus setiferus	White shrimp		Food	manual
+Loc_m		Locusta migratoria	Migratory locust		Food	manual
+Lol_p_1	Lol p 1	Lolium perenne	Rye grass	Beta-expansin	Airway	iuis
+Lol_spp.		Lolium spp.	Ryegrass		Airway	manual
+Lup_a		Lupinus albus	White lupine			iuis_species
+Mac_i_2S_Albumin		Macadamia integrifolia	Macadamia	2S albumin	Food	manual
+Mac_inte		Macadamia integrifolia	Macadamia		Food	manual
+Mal_d_2	Mal d 2	Malus domestica	Apple	Thaumatin-like protein	Food	iuis
+Mal_d_3	Mal d 3	Malus domestica	Apple	Non-specific lipid transfer protein type 1 (nsLTP1)	Food	iuis
+Mala_s_11	Mala s 11	Malassezia sympodialis	Skin-colonizing yeast	Manganese superoxide dismutase	Contact	iuis
+Mala_s_5	Mala s 5	Malassezia sympodialis	Skin-colonizing yeast		Contact	iuis
+Mala_s_6	Mala s 6	Malassezia sympodialis	Skin-colonizing yeast	Cyclophilin	Contact	iuis
+Man_i		Mangifera indica	Mango			iuis_species
+Mel_g		Meleagris gallopavo	Turkey		Food	manual
+Mes_a_1_RUO	Mes a 1	Mesocricetus auratus	Golden hamster	Lipocalin	Airway	iuis
+Mor_r		Morus rubra	Red mulberry		Airway	manual
+Mus_a		Musa acuminata	Banana			iuis_species
+Myt_e		Mytilus edulis	Blue mussel		Food	manual
+Ole_e_7_RUO	Ole e 7	Olea europaea	Olive	Putative non-specific lipid transfer protein	Airway	iuis
+Ori_v		Origanum vulgare	Oregano		Food	manual
+Ory_c_1	Ory c 1	Oryctolagus cuniculus	Rabbit	Lipocalin	Airway	iuis
+Ory_c_2	Ory c 2	Oryctolagus cuniculus	Rabbit	Odorant binding protein 2; member of the lipocalin family	Airway	iuis

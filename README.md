@@ -40,7 +40,8 @@ clinical_cols, ige_cols = split_columns(df)
 ## Structure
 
 ```
-src/acc/        shared code (loading, preprocessing, features)
+docs/           challenge summary
+src/acc/        shared code (loading, allergen names and families, features)
 notebooks/      exploration and analyses
 data/raw/       downloaded files (git-ignored)
 data/processed/ derived tables (git-ignored)
