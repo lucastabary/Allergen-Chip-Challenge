@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulateur de profils allergiques</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a lab notebook. Three numbered working surfaces (simulator, model scores,
+   allergen list); chrome stays quiet so the data colors carry the page. */
+:root {
+  --bg: #f1f4f4;
+  --surface: #fcfcfb;
+  --ink: #0b1517;
+  --ink-2: #48575a;
+  --muted: #7d8789;
+  --line: #dbe1e1;
+  --accent: #0b5c66;
+  --accent-ink: #ffffff;
+  --wash: #e6eded;
+  /* data colors (validated reference palette, light steps) */
+  --pooled: #2a78d6;
+  --specific: #eb6834;
+  --neutral-mark: #b4b9b8;
+  --sev0: #dfe3e2; --sev1: #9ec5f4; --sev2: #3987e5; --sev3: #184f95;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0c1112; --surface: #1a1a19; --ink: #eef1f0; --ink-2: #bcc5c5; --muted: #8a9495;
+    --line: #2d3435; --accent: #6fc3cd; --accent-ink: #06272b; --wash: #222a2b;
+    --pooled: #3987e5; --specific: #d95926; --neutral-mark: #5b6261;
+    --sev0: #343a3a; --sev1: #184f95; --sev2: #2a78d6; --sev3: #9ec5f4;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0c1112; --surface: #1a1a19; --ink: #eef1f0; --ink-2: #bcc5c5; --muted: #8a9495;
+  --line: #2d3435; --accent: #6fc3cd; --accent-ink: #06272b; --wash: #222a2b;
+  --pooled: #3987e5; --specific: #d95926; --neutral-mark: #5b6261;
+  --sev0: #343a3a; --sev1: #184f95; --sev2: #2a78d6; --sev3: #9ec5f4;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--font-body); }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(28px, 4vw, 42px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 15px; font-family: var(--font-body); font-weight: 600; }
+p { margin: 0; }
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.page { max-width: 1240px; margin: 0 auto; padding: 28px 20px 56px; display: flex; flex-direction: column; gap: 40px; }
+
+header.top { display: flex; flex-direction: column; gap: 12px; }
+.lede { max-width: 70ch; color: var(--ink-2); font-size: 16px; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; }
+.fact { border: 1px solid var(--line); background: var(--surface); padding: 3px 10px; border-radius: 999px; font-size: 13px; color: var(--ink-2); }
+.fact b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+section.view { display: flex; flex-direction: column; gap: 14px; }
+.view-head { display: flex; flex-direction: column; gap: 4px; }
+.step { font: 600 12px/1 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.view-head p { color: var(--ink-2); max-width: 76ch; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; align-items: start; }
+@media (max-width: 980px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.hint { font-size: 12.5px; color: var(--muted); }
+select, input[type="number"], input[type="search"] { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; min-height: 34px; max-width: 100%; }
+.btn { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; min-height: 34px; cursor: pointer; }
+.btn:hover { background: var(--wash); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; min-height: 34px; cursor: pointer; font-size: 14px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.seg button:not([aria-pressed="true"]):hover { background: var(--wash); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-end; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.control { display: flex; flex-direction: column; gap: 4px; }
+.control > span, .control > label { font-size: 13px; color: var(--ink-2); }
+.pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 1px 8px; font-size: 12px; border: 1px solid var(--line); color: var(--ink-2); white-space: nowrap; }
+
+/* form */
+.presets { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.presets > span { font-size: 13px; color: var(--ink-2); }
+form#clin { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+@media (max-width: 560px) { form#clin { grid-template-columns: minmax(0, 1fr); } }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field > label, fieldset legend { font-size: 13px; color: var(--ink-2); padding: 0; }
+.field select, .field input { width: 100%; }
+fieldset { border: 0; margin: 0; padding: 0; grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.checks { display: flex; flex-wrap: wrap; gap: 6px; }
+.checks label { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 13px; cursor: pointer; }
+.checks label:has(input:checked) { border-color: var(--accent); background: var(--wash); }
+
+/* results */
+.score { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; align-items: center; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.score .big { font: 700 40px/1 var(--font-display); letter-spacing: -0.02em; grid-row: span 2; font-variant-numeric: tabular-nums; }
+.score .cap { font-weight: 600; }
+.score .sub { font-size: 13px; color: var(--ink-2); }
+.cat { font: 600 12px/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 14px 0 4px; }
+.cat:first-child { padding-top: 0; }
+.row { border-top: 1px solid var(--line); padding: 9px 0; }
+.row summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; }
+.row summary::-webkit-details-marker { display: none; }
+.row .name { font-weight: 500; min-width: 0; }
+.row .f1 { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.row .f1 b { color: var(--ink); font-weight: 600; }
+.row.off .name, .row.off .f1 { color: var(--muted); }
+.bar { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) 46px 104px; gap: 10px; align-items: center; }
+.track { position: relative; height: 10px; background: var(--wash); border-radius: 4px; }
+.fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--pooled); border-radius: 4px; min-width: 2px; }
+.fill.spec { background: var(--specific); }
+.fill.no { background: var(--neutral-mark); }
+.tick { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
+.pct { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+.verdict { font-size: 12px; border-radius: 999px; padding: 1px 8px; border: 1px solid var(--line); color: var(--ink-2); white-space: nowrap; text-align: center; }
+.verdict.yes { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.why { margin-top: 8px; font-size: 13px; color: var(--ink-2); display: flex; flex-direction: column; gap: 3px; }
+.why ul { margin: 0; padding-left: 18px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* performance chart */
+.chart-wrap { overflow-x: auto; }
+.chart-wrap svg { display: block; width: 100%; max-width: 900px; min-width: 640px; height: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.finding { font-size: 15px; max-width: 80ch; }
+
+/* allergen table */
+.table-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.table-tools .control { flex: 1 1 240px; min-width: 0; }
+.table-tools select, .table-tools input { width: 100%; }
+.table-wrap { max-height: 520px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { position: sticky; top: 0; background: var(--surface); font-weight: 600; color: var(--ink-2); z-index: 1; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.na { color: var(--muted); text-align: right; }
+tr.excl td { color: var(--muted); }
+.excluded { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--ink-2); }
+.excluded ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
+
+/* profiles heatmaps */
+table.heat { font-size: 12.5px; }
+table.heat th { position: static; vertical-align: bottom; }
+table.heat td.c { text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.heat td.c small { display: block; font-size: 11px; }
+table.heat td.c.sig small { font-weight: 600; }
+table.heat th.p { min-width: 92px; text-align: center; font-weight: 600; color: var(--ink); }
+table.heat th.p span { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; }
+/* level pickers */
+.levels { display: flex; flex-direction: column; gap: 4px; }
+.lvl-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 13px; }
+.lvl-row .seg button { padding: 3px 8px; min-height: 28px; font-size: 12px; }
+.lvl-row.na { opacity: 0.5; }
+.truth { font-size: 12px; border-radius: 999px; padding: 1px 8px; border: 1px dashed var(--line); color: var(--ink-2); white-space: nowrap; }
+/* severity */
+.groups-pick { display: flex; flex-direction: column; gap: 8px; }
+.groups-pick .cat { padding: 6px 0 0; }
+.sev-row { border-top: 1px solid var(--line); padding: 12px 0; display: flex; flex-direction: column; gap: 8px; }
+.sev-row:first-child { border-top: 0; padding-top: 0; }
+.sev-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; }
+.sev-head h3 { font-size: 17px; font-family: var(--font-display); }
+.stack { display: flex; height: 22px; border-radius: 4px; overflow: hidden; gap: 2px; background: var(--surface); }
+.stack span { display: block; min-width: 2px; }
+.stack-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12.5px; color: var(--ink-2); }
+.stack-legend b { color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
+.stack-legend span { display: flex; align-items: center; gap: 5px; }
+.sw { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.lv { width: 100%; font-size: 13px; }
+.lv td, .lv th { padding: 4px 6px; }
+.lv th { position: static; }
+.warn { border-left: 3px solid var(--accent); background: var(--wash); padding: 8px 12px; border-radius: 4px; font-size: 13.5px; color: var(--ink-2); }
+.forest-wrap { overflow-x: auto; }
+.forest-wrap svg { display: block; width: 100%; max-width: 900px; min-width: 600px; height: auto; }
+.ceiling { width: 100%; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.notes .panel { font-size: 14px; color: var(--ink-2); }
+.notes h3 { color: var(--ink); }
+.notes ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; }
+footer { font-size: 13px; color: var(--muted); max-width: 80ch; }
+footer a { color: inherit; }
+@media (prefers-reduced-motion: no-preference) { .fill { transition: width 0.25s ease; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="top">
+  <h1>Simulateur de profils allergiques</h1>
+  <p class="lede">Ce que la base Allergen Chip Challenge dit des profils allergiques et de leur sévérité : huit profils de sensibilisation et leurs pathologies, un outil qui estime les pathologies à partir d'un résultat de puce, les facteurs de sévérité à centre égal, puis ce que la clinique seule permet d'estimer. Chaque estimation affiche sa fiabilité mesurée.</p>
+  <div class="facts" id="facts"></div>
+</header>
+
+<section class="view" id="profils" aria-labelledby="h-prof">
+  <div class="view-head">
+    <span class="step">1 · Profils allergiques</span>
+    <h2 id="h-prof">Huit profils de sensibilisation, et leurs pathologies</h2>
+    <p id="prof-lede"></p>
+  </div>
+  <div class="panel">
+    <h3>Ce qui définit chaque profil</h3>
+    <p class="hint">Part des patients du profil positifs à chaque groupe d'allergènes, sur leur propre puce. Plus la case est foncée, plus le groupe caractérise le profil.</p>
+    <div class="table-wrap" style="max-height:none"><table class="heat" id="prof-heat"></table></div>
+  </div>
+  <div class="panel">
+    <h3>Pathologies et sévérité de chaque profil</h3>
+    <p class="hint" id="prof-out-lede"></p>
+    <div class="table-wrap" style="max-height:none"><table class="heat" id="prof-out"></table></div>
+    <p class="finding" id="prof-finding"></p>
+  </div>
+</section>
+
+<section class="view" id="prediction" aria-labelledby="h-pred">
+  <div class="view-head">
+    <span class="step">2 · Prédiction</span>
+    <h2 id="h-pred">Du profil IgE aux pathologies</h2>
+    <p>Indiquez pour chaque groupe d'allergènes le résultat de la puce : négatif, ou positif d'intensité faible (0,3 à 1), modérée (1 à 15) ou forte (15 et plus). Les modèles estiment la probabilité de chaque pathologie, et la fiche indique le profil le plus proche.</p>
+  </div>
+  <div class="split">
+    <div class="panel">
+      <div class="controls">
+        <div class="control"><label for="p-chip">Puce</label><select id="p-chip"></select></div>
+        <div class="control"><label for="p-age">Âge (années)</label><input id="p-age" type="number" min="0" max="100" step="1" value="8" inputmode="numeric"></div>
+        <div class="control"><label for="p-sex">Sexe</label><select id="p-sex"><option value="">Non renseigné</option><option value="0">Femme</option><option value="1">Homme</option></select></div>
+      </div>
+      <div class="presets"><button class="btn" type="button" id="p-real">Charger un patient réel au hasard</button><button class="btn" type="button" id="p-clear">Tout négatif</button></div>
+      <p class="hint" id="p-real-note"></p>
+      <div id="p-groups" class="levels"></div>
+    </div>
+    <div class="panel">
+      <div class="score" id="p-profile"></div>
+      <div id="p-rows"></div>
+      <p class="hint" id="p-foot"></p>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="facteurs" aria-labelledby="h-forest">
+  <div class="view-head">
+    <span class="step">3 · Facteurs de sévérité</span>
+    <h2>Quelles sensibilisations vont de pair avec la sévérité ?</h2>
+    <p>Tout est comparé à centre, âge et sexe égaux, pour neutraliser les habitudes de prescription de chaque hôpital.</p>
+  </div>
+  <div class="panel">
+    <div class="view-head"><h3 id="h-forest">Facteurs de sévérité, à centre égal</h3><p class="hint" id="forest-lede"></p></div>
+    <div class="controls">
+      <div class="control"><span id="f-dis-label">Maladie</span><div class="seg" role="group" aria-labelledby="f-dis-label" id="f-dis"></div></div>
+      <div class="control"><span id="f-out-label">Comparaison</span><div class="seg" role="group" aria-labelledby="f-out-label" id="f-out"></div></div>
+      <div class="control"><span id="f-an-label">Analyse</span><div class="seg" role="group" aria-labelledby="f-an-label" id="f-an"></div></div>
+    </div>
+    <p class="finding" id="forest-finding"></p>
+    <div class="forest-wrap"><svg id="forest" role="img" aria-labelledby="h-forest"></svg></div>
+    <p class="hint" id="forest-note"></p>
+  </div>
+</section>
+
+<section class="view" id="simulateur" aria-labelledby="h-sim">
+  <div class="view-head">
+    <span class="step">4 · Ce que la clinique seule permet d'estimer</span>
+    <h2 id="h-sim">Du tableau clinique au profil probable</h2>
+    <p>Choisissez la puce : chaque puce ne mesure pas les mêmes allergènes, donc la probabilité d'un résultat positif en dépend. Le modèle commun apprend sur les trois puces à la fois, le modèle spécifique sur les seuls patients de la puce choisie.</p>
+  </div>
+  <div class="split">
+    <div class="panel">
+      <div class="controls">
+        <div class="control"><label for="f-chip">Puce</label><select id="f-chip"></select></div>
+        <div class="control"><span id="mode-label">Modèle</span><div class="seg" role="group" aria-labelledby="mode-label" id="mode"></div></div>
+      </div>
+      <div class="presets"><span>Exemples :</span><span id="presets" class="presets"></span></div>
+      <form id="clin" autocomplete="off"></form>
+      <p class="hint">Laissez « Non renseigné » pour ce que vous ignorez : chaque réponse non renseignée est simplement ignorée par le modèle.</p>
+    </div>
+    <div class="panel">
+      <div class="score" id="score"></div>
+      <div id="rows"></div>
+      <p class="hint" id="neigh"></p>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="severite" aria-labelledby="h-sev">
+  <div class="view-head">
+    <span class="step">4 · Suite : sévérité</span>
+    <h2 id="h-sev">Ce que ce profil implique pour la sévérité</h2>
+    <p>Cette partie s'applique au patient décrit dans le simulateur clinique ci-dessus, sans nouvelle saisie. La base ne mesure pas la sévérité : nous l'approchons par le palier de traitement de trois maladies, de 0 (aucun traitement) à 3 (traitement des formes sévères).</p>
+  </div>
+  <div class="split">
+    <div class="panel">
+      <h3>Sensibilisations probables et sévérité associée</h3>
+      <p class="hint" id="sev-groups-lede"></p>
+      <div id="sev-groups"></div>
+    </div>
+    <div class="panel">
+      <h3>Palier de traitement des maladies non renseignées</h3>
+      <p class="hint" id="sev-dis-lede"></p>
+      <div id="sev-rows"></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="performances" aria-labelledby="h-perf">
+  <div class="view-head">
+    <span class="step">5 · Performances du simulateur clinique</span>
+    <h2 id="h-perf">Ce que valent les modèles, toutes puces et puce par puce</h2>
+    <p>Score F1 mesuré sur des patients que les modèles n'avaient pas vus. Le modèle commun et les modèles spécifiques sont notés sur exactement les mêmes patients, ce qui rend la comparaison directe.</p>
+  </div>
+  <div class="panel">
+    <div class="controls">
+      <div class="control"><span id="perf-label">Patients évalués</span><div class="seg" role="group" aria-labelledby="perf-label" id="perf-chip"></div></div>
+    </div>
+    <p class="finding" id="finding"></p>
+    <div class="legend" id="perf-legend"></div>
+    <div class="chart-wrap"><svg id="perf" role="img" aria-labelledby="h-perf"></svg></div>
+    <p class="hint" id="perf-note"></p>
+  </div>
+  <div class="panel">
+    <h3>Peut-on faire monter ce F1 ?</h3>
+    <p class="finding" id="ceil-lede"></p>
+    <div class="table-wrap" style="max-height:none"><table class="ceiling" id="ceil"></table></div>
+    <p class="hint">Comparaison sur les mêmes 5 plis pour toutes les variantes ; le seuil y est réglé sur les prédictions elles-mêmes, ce qui flatte chaque variante d'autant : seuls les écarts comptent.</p>
+  </div>
+</section>
+
+<section class="view" id="allergenes" aria-labelledby="h-all">
+  <div class="view-head">
+    <span class="step">6 · Allergènes</span>
+    <h2 id="h-all"></h2>
+    <p id="all-lede"></p>
+  </div>
+  <div class="panel">
+    <div class="table-tools">
+      <div class="control"><label for="t-group">Groupe</label><select id="t-group"></select></div>
+      <div class="control"><label for="t-search">Rechercher</label><input type="search" id="t-search" placeholder="Ara h 2, peanut, birch, graminées…"></div>
+      <span class="hint" id="t-count"></span>
+    </div>
+    <div class="table-wrap"><table id="t-all"></table></div>
+    <div class="excluded" id="excluded"></div>
+  </div>
+</section>
+
+<section class="view" aria-labelledby="h-notes">
+  <div class="view-head">
+    <span class="step">Méthode</span>
+    <h2 id="h-notes">Comment lire ces résultats</h2>
+  </div>
+  <div class="notes">
+    <div class="panel"><h3>Profils et prédiction (parties 1 à 3)</h3><ul id="note-ige"></ul></div>
+    <div class="panel"><h3>Simulateur clinique (parties 4 et 5)</h3><ul id="note-model"></ul></div>
+    <div class="panel"><h3>Le score F1</h3><ul id="note-f1"></ul></div>
+    <div class="panel"><h3>Les limites</h3><ul>
+      <li>Les patients viennent de services hospitaliers, souvent pour des allergies alimentaires sévères. Rien ici ne décrit la population générale.</li>
+      <li>Une sensibilisation (IgE positive) n'est pas une allergie : seul un médecin pose ce diagnostic.</li>
+      <li>La base ne contient pas de mesure directe de sévérité. Nous utilisons le palier de traitement (aucun, léger, modéré, sévère : GINA pour l'asthme, ARIA pour la rhinite, traitement systémique pour la dermatite atopique) comme indice indirect.</li>
+      <li>Les diagnostics d'allergie confirmée, qui ont permis au vainqueur du défi 2023 d'atteindre un F1 proche de 0,8, ont été retirés du fichier ouvert : nos F1 portent sur d'autres cibles et ne sont pas comparables à ce chiffre.</li>
+      <li>Les centres prescrivent différemment : une association qui disparaît à centre égal reflète une pratique locale, pas la biologie.</li>
+      <li>L'âge de début d'une allergie alimentaire est codé par tranches dans la base source, la dernière étant « après 20 ans ».</li>
+      <li>Cet outil est une démonstration pédagogique, pas une aide au diagnostic.</li>
+    </ul></div>
+  </div>
+</section>
+
+<footer>
+  Données : <a href="https://www.data.gouv.fr/datasets/allergen-chip-challenge">Allergen Chip Challenge</a>, Société Française d'Allergologie et Health Data Hub, Licence Ouverte 2.0. Noms des allergènes : nomenclature <a href="https://www.allergen.org">WHO/IUIS</a>. Projet réalisé pour le défi data.gouv.fr « Identifier et prévoir les facteurs de sévérité des allergies », TELECOM Nancy.
+</footer>
+</div>
+
+<script>
+const DATA = /*__ATLAS_DATA__*/null;
+</script>
+<script>
+(function () {
+"use strict";
+if (!DATA) { document.body.insertAdjacentHTML("afterbegin", "<p style='padding:20px'>Données absentes : générez la page avec <code>uv run acc-atlas</code>.</p>"); return; }
+
+const P = DATA.patients, NP = P.age.length, M = DATA.model, META = DATA.meta, G = M.groups;
+const CHIPS = META.chips, CL = META.chip_labels;
+const fr = (v, d = 0) => v.toLocaleString("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const pct = v => fr(100 * v) + " %";
+const $ = id => document.getElementById(id);
+const el = (tag, attrs = {}, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v; else if (k === "text") e.textContent = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+  }
+  for (const k of kids) e.append(k);
+  return e;
+};
+const svgEl = (tag, attrs = {}, text) => {
+  const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (text !== undefined) e.textContent = text;
+  return e;
+};
+const mean = xs => xs.reduce((s, x) => s + x, 0) / xs.length;
+const shortLabel = l => l.replace("Aliments végétaux : ", "Végétaux : ").replace("protéines de transfert lipidique (LTP)", "LTP").replace(" (dont alpha-gal)", "");
+const FIELD = Object.fromEntries(DATA.fields.map(f => [f.key, f]));
+const CATS = [...new Set(G.map(g => g.category))];
+const GROUP_LABEL = Object.fromEntries(G.map(g => [g.key, g.label]));
+
+$("facts").append(
+  el("span", { class: "fact" }, el("b", { text: fr(META.n_patients) }), " patients"),
+  el("span", { class: "fact" }, el("b", { text: fr(M.n_train) }), " avec données cliniques"),
+  el("span", { class: "fact" }, el("b", { text: String(META.n_allergens) }), " allergènes"),
+  el("span", { class: "fact" }, el("b", { text: String(META.n_groups) }), " groupes modélisés"),
+  el("span", { class: "fact" }, el("b", { text: "3" }), " puces"),
+  el("span", { class: "fact" }, el("b", { text: String(DATA.profiles.k) }), " profils IgE"),
+  el("span", { class: "fact" }, el("b", { text: "11" }), " centres"));
+
+/* ---------- state ---------- */
+const st = { chip: 2, mode: "pooled", perf: -1 };
+const segmented = (box, options, get, set) => {
+  const render = () => { for (const b of box.children) b.setAttribute("aria-pressed", String(b.dataset.v === String(get()))); };
+  for (const [v, label] of options) box.append(el("button", { type: "button", "data-v": String(v), text: label, onclick: () => { set(v); render(); } }));
+  render();
+};
+
+/* ---------- form ---------- */
+const chipSel = $("f-chip");
+CHIPS.forEach((c, i) => chipSel.append(el("option", { value: String(i), text: CL[i] + " (" + fr(M.n_train_by_chip[c]) + " patients)" })));
+chipSel.value = String(st.chip);
+chipSel.onchange = () => { st.chip = +chipSel.value; update(); };
+segmented($("mode"), [["pooled", "Commun aux 3 puces"], ["specific", "Spécifique à la puce"]], () => st.mode, v => { st.mode = v; update(); });
+
+const form = $("clin");
+const fieldSelect = (id, label, options) => {
+  const s = el("select", { id, name: id });
+  for (const [v, t] of options) s.append(el("option", { value: v, text: t }));
+  return el("div", { class: "field" }, el("label", { for: id, text: label }), s);
+};
+form.append(
+  el("div", { class: "field" }, el("label", { for: "f-age", text: "Âge du patient (années)" }),
+    el("input", { id: "f-age", name: "f-age", type: "number", min: "0", max: "100", step: "1", value: "6", inputmode: "numeric" })),
+  fieldSelect("f-sex", "Sexe", [["", "Non renseigné"], ["0", "Femme"], ["1", "Homme"]]));
+for (const f of DATA.fields) {
+  if (f.key === "cof") continue;
+  form.append(fieldSelect("f-" + f.key, f.label, [["", "Non renseigné"], ...f.model_codes.map(c => [c, f.options[c]])]));
+}
+const cof = FIELD.cof, checks = el("div", { class: "checks" });
+for (const c of cof.model_codes) checks.append(el("label", {}, el("input", { type: "checkbox", id: "f-cof-" + c, name: "f-cof-" + c, value: c }), cof.options[c]));
+form.append(el("fieldset", {}, el("legend", { text: cof.label }), checks));
+form.addEventListener("submit", e => e.preventDefault());
+form.addEventListener("input", update);
+
+const PRESETS = [
+  ["Enfant, eczéma, allergie alimentaire précoce", { age: 4, sex: "1", skin: "1", ad: "2", onset: "2" }],
+  ["Adolescent, rhinite et asthme traités", { age: 15, sex: "1", rhin: "2", asth: "3", onset: "0", cof: ["6"] }],
+  ["Adulte, allergie alimentaire tardive", { age: 45, sex: "0", skin: "1", rhin: "0", asth: "0", ad: "0", onset: "6" }],
+];
+for (const [name, v] of PRESETS) $("presets").append(el("button", { class: "btn", type: "button", text: name, onclick: () => { fill(v); update(); } }));
+function fill(v) {
+  $("f-age").value = v.age; $("f-sex").value = v.sex || "";
+  for (const f of DATA.fields) if (f.key !== "cof") $("f-" + f.key).value = v[f.key] || "";
+  for (const c of cof.model_codes) $("f-cof-" + c).checked = (v.cof || []).includes(c);
+}
+function answers() {
+  const age = Math.max(0, Math.min(100, parseFloat($("f-age").value)));
+  const a = { age: isNaN(age) ? null : age, sex: $("f-sex").value, cof: cof.model_codes.filter(c => $("f-cof-" + c).checked) };
+  for (const f of DATA.fields) if (f.key !== "cof") a[f.key] = $("f-" + f.key).value;
+  return a;
+}
+function activeFeatures(a) {               // names of the clinical inputs set to 1
+  const on = new Set();
+  const band = META.age_bins.findIndex(b => a.age <= b[1]);
+  on.add("age_" + (band < 0 ? META.age_bins.length - 1 : band));
+  if (a.sex === "1") on.add("male"); if (a.sex === "0") on.add("female");
+  for (const f of DATA.fields) if (f.key !== "cof" && a[f.key]) on.add(f.key + "_" + a[f.key]);
+  for (const c of a.cof) on.add("cof_" + c);
+  return on;
+}
+const featureVector = a => { const on = activeFeatures(a); return M.features.map(n => on.has(n) ? 1 : 0); };
+const codesOf = (key, i) => P.clinical[key][i].split(",");
+function similar(a, chip, k = 50) {        // real patients of the same chip closest to the answers
+  const scored = [];
+  for (let i = 0; i < NP; i++) {
+    if (P.chip[i] !== chip) continue;
+    let d = Math.min(Math.abs(P.age[i] - a.age) / 10, 2);
+    if (a.sex !== "" && String(P.sex[i]) !== a.sex) d += 0.3;
+    for (const f of DATA.fields) {
+      const codes = codesOf(f.key, i);
+      if (f.key === "cof") { for (const c of a.cof) if (!codes.includes(c)) d += 0.5; continue; }
+      if (!a[f.key]) continue;
+      d += codes.includes("9") ? 0.6 : (codes.includes(a[f.key]) ? 0 : 1);
+    }
+    scored.push([d, i]);
+  }
+  scored.sort((x, y) => x[0] - y[0]);
+  return scored.slice(0, k).map(s => s[1]);
+}
+
+/* active model of a group for the chosen chip and mode */
+function active(g, ci) {
+  const entry = g.chips[CHIPS[ci]];
+  if (!entry) return null;
+  const useSpecific = st.mode === "specific" && entry.specific;
+  return {
+    entry, kind: useSpecific ? "specific" : "pooled", fallback: st.mode === "specific" && !entry.specific,
+    model: useSpecific ? entry.specific : g.pooled,
+    scores: useSpecific ? entry.specific : entry.pooled,
+  };
+}
+const openRows = new Set();
+function update() {
+  const a = answers(), rows = $("rows"), ci = st.chip;
+  if (a.age === null) { rows.replaceChildren(el("p", { class: "hint", text: "Indiquez un âge entre 0 et 100 ans pour lancer l'estimation." })); $("neigh").textContent = ""; return; }
+  const base = featureVector(a), chipOneHot = CHIPS.map((c, i) => i === ci ? 1 : 0);
+  const near = similar(a, ci);
+  const names = M.features.concat(M.chip_features);
+  const out = [], f1s = [], refs = [];
+  for (const g of G) {
+    const act = active(g, ci);
+    if (!act) { out.push({ g, off: true }); continue; }
+    const x = act.kind === "pooled" ? base.concat(chipOneHot) : base;
+    let z = act.model.intercept; const parts = [];
+    act.model.coef.forEach((c, j) => { if (x[j]) { z += c; if (j < M.features.length) parts.push([c, M.feature_labels[names[j]]]); } });
+    const p = 1 / (1 + Math.exp(-z));
+    const obs = near.filter(i => P.targets[g.key][i] === 1).length;
+    f1s.push(act.scores.f1); refs.push(act.entry.f1_always_positive);
+    out.push({ g, act, p, yes: p >= act.model.threshold, obs,
+      parts: parts.sort((u, v) => Math.abs(v[0]) - Math.abs(u[0])).slice(0, 4) });
+  }
+  $("score").replaceChildren(
+    el("span", { class: "big", text: fr(mean(f1s), 2) }),
+    el("span", { class: "cap", text: "Score F1 moyen sur " + CL[ci] + ", modèle " + (st.mode === "pooled" ? "commun" : "spécifique") }),
+    el("span", { class: "sub", text: "Contre " + fr(mean(refs), 2) + " en déclarant tout le monde sensibilisé. Moyenne des " + f1s.length + " groupes mesurés par cette puce, validation croisée." }));
+  const blocks = [];
+  for (const cat of CATS) {
+    blocks.push(el("div", { class: "cat", text: cat }));
+    for (const r of out.filter(r => r.g.category === cat)) blocks.push(r.off ? offRow(r.g, ci) : resultRow(r, ci, near.length));
+  }
+  rows.replaceChildren(...blocks);
+  const onSet = activeFeatures(a); onSet.add("chip_" + CHIPS[ci]);
+  updateSev(a, out, ci, onSet);
+  $("neigh").textContent = "Pour comparaison, chaque ligne dépliée indique combien des " + near.length + " patients réels de " + CL[ci] + " les plus proches de ce tableau sont effectivement sensibilisés.";
+}
+function offRow(g, ci) {
+  return el("div", { class: "row off" }, el("div", { class: "bar", style: "grid-template-columns:minmax(0,1fr) auto" },
+    el("span", { class: "name", text: g.label }), el("span", { class: "f1", text: "Non mesuré par " + CL[ci] })));
+}
+function resultRow(r, ci, nNear) {
+  const { g, act } = r, sc = act.scores, e = act.entry;
+  const d = el("details", { class: "row" });
+  if (openRows.has(g.key)) d.open = true;
+  d.addEventListener("toggle", () => d.open ? openRows.add(g.key) : openRows.delete(g.key));
+  const f1 = el("span", { class: "f1" }, "F1 ", el("b", { text: fr(sc.f1, 2) }), " · réf. " + fr(e.f1_always_positive, 2));
+  if (act.fallback) f1.prepend(el("span", { class: "pill", text: "modèle commun", title: "Trop peu de cas pour un modèle spécifique" }), " ");
+  d.append(el("summary", {},
+    el("span", { class: "name", text: g.label }), f1,
+    el("span", { class: "bar" },
+      el("span", { class: "track" }, el("span", { class: "fill" + (r.yes ? (act.kind === "specific" ? " spec" : "") : " no"), style: "width:" + (100 * r.p).toFixed(1) + "%" }),
+        el("span", { class: "tick", style: "left:" + (100 * act.model.threshold).toFixed(1) + "%", title: "Seuil de décision" })),
+      el("span", { class: "pct", text: pct(r.p) }),
+      el("span", { class: "verdict" + (r.yes ? " yes" : ""), text: r.yes ? "À rechercher" : "Peu probable" }))));
+  const why = el("div", { class: "why" });
+  const nAll = META.group_sizes[g.key][ci];
+  why.append(el("span", { text: CL[ci] + " mesure " + nAll + " allergène(s) de ce groupe ; " + pct(e.prevalence) + " de ses patients sont sensibilisés à au moins un." }));
+  if (r.parts.length) {
+    why.append(el("span", { text: "Ce qui pèse le plus dans cette estimation :" }));
+    const ul = el("ul");
+    for (const [c, label] of r.parts) ul.append(el("li", {}, label + " ", el("span", { class: "num", text: "(cote × " + fr(Math.exp(c), 2) + ")" })));
+    why.append(ul);
+  }
+  why.append(el("span", { text: "Observé chez " + r.obs + " des " + nNear + " patients réels les plus proches. Seuil de décision : " + pct(act.model.threshold) +
+    ". F1 " + fr(sc.f1, 2) + ", AUC " + fr(sc.auc, 2) + ", calculés sur les " + fr(e.n) + " patients de " + CL[ci] + "." }));
+  d.append(why);
+  return d;
+}
+
+/* ---------- performance chart ---------- */
+segmented($("perf-chip"), [[-1, "Toutes puces"], ...CL.map((l, i) => [i, l])], () => st.perf, v => { st.perf = +v; drawPerf(); });
+function perfRows() {
+  return G.map(g => {
+    if (st.perf < 0) return { g, ref: g.pooled.f1_always_positive, pooled: g.pooled.f1, agesex: g.pooled.f1_age_sex, specific: null, nc: g.pooled.f1_new_centre ?? null };
+    const e = g.chips[CHIPS[st.perf]];
+    if (!e) return { g, missing: true };
+    return { g, ref: e.f1_always_positive, pooled: e.pooled.f1, agesex: e.pooled.f1_age_sex, specific: e.specific ? e.specific.f1 : null };
+  });
+}
+function drawPerf() {
+  const svg = $("perf"), rows = perfRows(), all = st.perf < 0;
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const W = 900, left = 330, right = 215, rowH = 26, catH = 30;
+  const x0 = left, x1 = W - right, maxV = 0.8, x = v => x0 + Math.min(v, maxV) / maxV * (x1 - x0);
+  let y = 30; const items = [];
+  for (const cat of CATS) { items.push({ cat, y: y + 18 }); y += catH; for (const r of rows.filter(r => r.g.category === cat)) { items.push({ r, y: y + rowH / 2 }); y += rowH; } }
+  const H = y + 10;
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H); svg.replaceChildren();
+  const ink = "var(--ink)", ink2 = "var(--ink-2)", muted = "var(--muted)", line = "var(--line)";
+  for (const v of [0, 0.2, 0.4, 0.6, 0.8]) {
+    svg.append(svgEl("line", { x1: x(v), x2: x(v), y1: 22, y2: H - 6, stroke: line }));
+    svg.append(svgEl("text", { x: x(v), y: 14, "text-anchor": "middle", fill: muted, "font-size": 11 }, fr(v, 1)));
+  }
+  const cols = all ? [["Réf.", "ref"], ["Commun", "pooled"], ["Nouv. c.", "nc"]] : [["Réf.", "ref"], ["Commun", "pooled"], ["Spécif.", "specific"]];
+  cols.forEach(([t], k) => svg.append(svgEl("text", { x: x1 + 46 + k * 60, y: 14, "text-anchor": "end", fill: muted, "font-size": 11 }, t)));
+  for (const it of items) {
+    if (it.cat) { svg.append(svgEl("text", { x: 0, y: it.y, fill: muted, "font-size": 11, "font-weight": 600, "letter-spacing": "0.06em" }, it.cat.toUpperCase())); continue; }
+    const r = it.r, cy = it.y;
+    svg.append(svgEl("text", { x: 0, y: cy + 4, fill: r.missing ? muted : ink, "font-size": 12.5 }, shortLabel(r.g.label)));
+    if (r.missing) { svg.append(svgEl("text", { x: x0, y: cy + 4, fill: muted, "font-size": 12 }, "Non mesuré par " + CL[st.perf])); continue; }
+    const vals = [r.ref, r.pooled, r.specific, all ? r.nc : null].filter(v => v !== null && v !== undefined);
+    svg.append(svgEl("line", { x1: x(Math.min(...vals)), x2: x(Math.max(...vals)), y1: cy, y2: cy, stroke: css("--neutral-mark"), "stroke-width": 2 }));
+    const tick = svgEl("line", { x1: x(r.agesex), x2: x(r.agesex), y1: cy - 6, y2: cy + 6, stroke: ink2, "stroke-width": 1.5 });
+    tick.append(svgEl("title", {}, r.g.label + " : F1 " + fr(r.agesex, 2) + " avec âge, sexe et puce seuls")); svg.append(tick);
+    const dot = (v, color, rad, label) => { const c = svgEl("circle", { cx: x(v), cy, r: rad, fill: color, stroke: "var(--surface)", "stroke-width": 1.5 }); c.append(svgEl("title", {}, r.g.label + " : F1 " + fr(v, 2) + " " + label)); svg.append(c); };
+    dot(r.ref, css("--neutral-mark"), 5, "en déclarant tout le monde sensibilisé");
+    if (r.specific !== null) dot(r.specific, css("--specific"), 5.5, "pour le modèle spécifique");
+    dot(r.pooled, css("--pooled"), 5.5, "pour le modèle commun");
+    if (all && r.nc !== null) { const c = svgEl("circle", { cx: x(r.nc), cy, r: 5, fill: "var(--surface)", stroke: css("--pooled"), "stroke-width": 2 }); c.append(svgEl("title", {}, r.g.label + " : F1 " + fr(r.nc, 2) + " dans un centre nouveau")); svg.append(c); }
+    cols.forEach(([, k], j) => {
+      const v = r[k];
+      svg.append(svgEl("text", { x: x1 + 46 + j * 60, y: cy + 4, "text-anchor": "end", fill: v === null ? muted : (k === "ref" ? ink2 : ink), "font-size": 12, "font-weight": k === "ref" ? 400 : 600 }, v === null ? "trop peu" : fr(v, 2)));
+    });
+  }
+  const legend = $("perf-legend"); legend.replaceChildren(
+    el("span", {}, el("span", { class: "dot", style: "background:var(--neutral-mark)" }), "Référence : tout le monde déclaré sensibilisé"),
+    el("span", {}, el("span", { style: "width:2px;height:12px;background:var(--ink-2);display:inline-block" }), "Âge, sexe et puce seuls"),
+    el("span", {}, el("span", { class: "dot", style: "background:var(--pooled)" }), "Modèle commun"));
+  if (all) legend.append(el("span", {}, el("span", { class: "dot", style: "background:var(--surface);border:2px solid var(--pooled);box-sizing:border-box" }), "Modèle commun, testé dans un centre nouveau"));
+  if (!all) legend.append(el("span", {}, el("span", { class: "dot", style: "background:var(--specific)" }), "Modèle spécifique à la puce"));
+  // finding, computed from the scores shown
+  const ok = rows.filter(r => !r.missing);
+  if (all) {
+    const gain = mean(ok.map(r => r.pooled - r.ref));
+    const beat = ok.filter(r => r.pooled > r.ref).length;
+    const top = [...ok].sort((u, v) => (v.pooled - v.ref) - (u.pooled - u.ref)).slice(0, 3).map(r => r.g.label.replace("Aliments végétaux : ", "").toLowerCase());
+    $("finding").textContent = "Sur les " + fr(M.n_train) + " patients, le modèle commun dépasse la référence dans " + beat + " groupes sur " + ok.length + ", de " + fr(gain, 2) + " point de F1 en moyenne. Les plus gros gains : " + top.join(", ") + ".";
+  } else {
+    const both = ok.filter(r => r.specific !== null);
+    const mp = mean(both.map(r => r.pooled)), ms = mean(both.map(r => r.specific));
+    const better = both.filter(r => r.pooled >= r.specific).length;
+    const verdict = Math.abs(mp - ms) < 0.01 ? "les deux variantes font jeu égal" : (mp > ms ? "le modèle commun fait mieux" : "le modèle spécifique fait mieux");
+    $("finding").textContent = "Sur " + CL[st.perf] + ", " + verdict + " : F1 moyen " + fr(mp, 2) + " pour le modèle commun contre " + fr(ms, 2) + " pour le modèle spécifique, avec un avantage au modèle commun dans " + better + " groupes sur " + both.length + ".";
+  }
+  $("perf-note").textContent = "Moyenne de " + M.n_repeats + " validations croisées à 5 plis. Modèle spécifique entraîné seulement quand la puce compte au moins " + M.min_cases + " patients sensibilisés et " + M.min_cases + " non sensibilisés. Survolez un point pour sa valeur.";
+}
+
+/* ---------- allergen table ---------- */
+const A = DATA.allergens, nIncl = A.filter(a => a.group).length;
+$("h-all").textContent = "Les " + A.length + " allergènes et leur groupe";
+$("all-lede").textContent = nIncl + " allergènes sont répartis dans les " + G.length + " groupes modélisés : chaque patient est jugé sur tous ceux que sa puce mesure. Les " + (A.length - nIncl) + " autres sont écartés, pour les raisons données sous le tableau. Les pourcentages indiquent la part de patients positifs (IgE ≥ 0,3) parmi ceux testés sur chaque puce ; un tiret signale un allergène absent de la puce.";
+const tGroup = $("t-group");
+tGroup.append(el("option", { value: "", text: "Tous les groupes" }));
+for (const g of G) tGroup.append(el("option", { value: g.key, text: g.label + " (" + META.group_sizes[g.key].map((n, i) => CL[i] + " " + n).join(", ") + ")" }));
+tGroup.append(el("option", { value: "_excl", text: "Allergènes écartés" }));
+function drawTable() {
+  const q = $("t-search").value.trim().toLowerCase(), gsel = tGroup.value;
+  const rows = A.filter(a => (gsel === "" || (gsel === "_excl" ? !a.group : a.group === gsel)) &&
+    (!q || (a.name + " " + a.column + " " + a.family + " " + (a.group ? GROUP_LABEL[a.group] : "")).toLowerCase().includes(q)));
+  const head = el("tr", {}, el("th", { text: "Allergène" }), el("th", { text: "Famille" }), el("th", { text: "Groupe" }), ...CL.map(l => el("th", { class: "n", text: l })));
+  const body = rows.map(a => el("tr", { class: a.group ? "" : "excl" },
+    el("td", { text: a.name }), el("td", { text: a.family }), el("td", { text: a.group ? GROUP_LABEL[a.group] : "Écarté" }),
+    ...a.rates.map(v => v === null ? el("td", { class: "na", text: "—", title: "Non mesuré par cette puce" }) : el("td", { class: "n", text: pct(v) }))));
+  $("t-all").replaceChildren(el("thead", {}, head), el("tbody", {}, ...body));
+  $("t-count").textContent = rows.length + " allergène(s) affiché(s)";
+}
+tGroup.onchange = drawTable; $("t-search").oninput = drawTable;
+const exUl = el("ul");
+for (const a of A.filter(a => !a.group)) exUl.append(el("li", {}, el("b", { text: a.name + " : " }), a.excluded));
+$("excluded").append(el("h3", { text: "Pourquoi " + (A.length - nIncl) + " allergènes sont écartés" }), exUl);
+
+
+/* ---------- severity (applies to the patient of simulator 1) ---------- */
+const SV = DATA.severity, DM = SV.degree_models;
+const SEV_COLORS = ["--sev0", "--sev1", "--sev2", "--sev3"];
+const DIS_ART = { asthma: ["un asthme", "l'asthme"], atopic_dermatitis: ["une dermatite atopique", "la dermatite atopique"], rhinitis: ["une rhinite", "la rhinite"] };
+const factorOf = (dis, outcome, key) => {
+  const f = SV.factors.find(f => f.target === dis && f.outcome === outcome);
+  return f && f.results.find(r => r.exposure === "grp_" + key);
+};
+const timesTxt = r => "cote × " + fr(r.or, 2) + " (IC 95 % " + fr(r.low, 2) + " à " + fr(r.high, 2) + ")";
+$("sev-groups-lede").textContent = "Pour chaque groupe signalé « À rechercher » dans le simulateur clinique : à centre, âge et sexe égaux, de combien la cote d'une forme sévère (puis d'un traitement) est multipliée chez les patients sensibilisés à ce groupe. Seules les associations significatives après correction des tests multiples sont citées. La base ne dit pas quel allergène provoque une maladie : c'est une association, pas la sévérité de l'allergie de ce patient à ce groupe.";
+$("sev-dis-lede").textContent = "Pour les maladies laissées « Non renseigné » dans le formulaire, un modèle estime le palier probable à partir des autres réponses, de l'âge, du sexe et de la puce. Les maladies déjà renseignées ne sont pas prédites.";
+function updateSev(a, out, ci, on) {
+  // A. one card per group flagged in simulator 1
+  const flagged = out.filter(r => !r.off && r.yes).sort((u, v) => v.p - u.p);
+  const cell = f => f && f.q < 0.05 ? el("td", { class: "n", text: "× " + fr(f.or, 2), title: "IC 95 % " + fr(f.low, 2) + " à " + fr(f.high, 2) + ", q = " + f.q })
+    : el("td", { class: "na", text: "—", title: f ? "Non significatif (q = " + f.q + ")" : "Non calculé" });
+  const cards = flagged.map((r, i) => {
+    const rows = DM.map(m => [m, factorOf(m.key, "severe", r.g.key), factorOf(m.key, "treated", r.g.key)]);
+    const box = el("div", { class: "sev-row" },
+      el("div", { class: "sev-head" }, el("h3", { text: shortLabel(r.g.label) }), el("span", { class: "pill", text: pct(r.p) + " de probabilité" })),
+      el("table", { class: "lv" },
+        el("thead", {}, el("tr", {}, el("th", { text: "Maladie" }), el("th", { class: "n", text: "Forme sévère" }), el("th", { class: "n", text: "Être traité" }))),
+        el("tbody", {}, ...rows.map(([m, fs, ft]) => el("tr", {}, el("td", { text: m.label }), cell(fs), cell(ft))))));
+    const best = rows.filter(([, fs]) => fs && fs.q < 0.05).sort((x, y) => y[1].or - x[1].or)[0];
+    if (i === 0 && best) box.append(el("p", { class: "hint", text: "Lecture : à centre, âge et sexe égaux, les patients sensibilisés à ce groupe ont une cote d'être traités pour " + DIS_ART[best[0].key][0] + " sévère " + fr(best[1].or, 1) + " fois plus élevée que les autres. Un tiret signale une association non significative." }));
+    else if (!best) box.append(el("p", { class: "hint", text: "Aucune association significative avec une forme sévère." }));
+    return box;
+  });
+  $("sev-groups").replaceChildren(...(cards.length ? cards : [el("p", { class: "hint", text: "Aucun groupe n'est signalé « À rechercher » pour ce patient." })]));
+
+  // B. degree of the diseases left "not provided"
+  $("sev-rows").replaceChildren(...DM.map(m => {
+    const field = FIELD[m.field], answer = a[m.field];
+    const head = el("div", { class: "sev-head" }, el("h3", { text: m.label }));
+    if (answer) {
+      const degree = m.codes[answer] ?? 0;
+      head.append(el("span", { class: "pill", text: "Renseigné : palier " + SV.levels[degree].toLowerCase() }));
+      return el("div", { class: "sev-row" }, head, el("p", { class: "hint", text: "Traitement indiqué dans le formulaire : " + field.options[answer] + ". Rien à estimer." }));
+    }
+    const x = m.features.map(n => on.has(n) ? 1 : 0);
+    const z = m.intercept.map((b, k) => b + m.coef[k].reduce((s, c, j) => s + (x[j] ? c : 0), 0));
+    const zmax = Math.max(...z), e = z.map(v => Math.exp(v - zmax)), tot = e.reduce((s, v) => s + v, 0), probs = e.map(v => v / tot);
+    const best = probs.indexOf(Math.max(...probs));
+    head.append(el("span", { class: "verdict" + (best >= 2 ? " yes" : ""), text: "Palier le plus probable : " + SV.levels[best].toLowerCase() }));
+    const stack = el("div", { class: "stack", role: "img", "aria-label": m.label + " : " + probs.map((v, k) => SV.levels[k] + " " + pct(v)).join(", ") },
+      ...probs.map((v, k) => el("span", { style: "width:" + (100 * v).toFixed(1) + "%;background:var(" + SEV_COLORS[k] + ")", title: SV.levels[k] + " : " + pct(v) })));
+    const legend = el("div", { class: "stack-legend" }, ...probs.map((v, k) => el("span", {}, el("span", { class: "sw", style: "background:var(" + SEV_COLORS[k] + ")" }), SV.levels[k] + " ", el("b", { text: pct(v) }))));
+    const heavy = Math.round(100 * (probs[2] + probs[3]));
+    return el("div", { class: "sev-row" }, head, stack, legend,
+      el("p", { class: "hint", text: "Lecture : sur 100 patients ayant ces réponses, environ " + heavy + " seraient traités pour " + DIS_ART[m.key][0] + " à un palier modéré ou sévère." }),
+      el("p", { class: "hint", text: "Fiabilité (F1 moyen par palier) : " + fr(m.f1, 2) + " dans les mêmes centres, " + fr(m.f1_new_centre, 2) + " dans un centre nouveau ; " + fr(m.f1_majority, 2) + " en répondant toujours le palier le plus fréquent. Calculé sur " + fr(m.n) + " patients." }));
+  }));
+}
+
+/* ---------- 3. severity factors: forest plot ---------- */
+const st2 = { dis: DM[0].key, out: "severe", an: "joint" };
+segmented($("f-dis"), DM.map(t => [t.key, t.label]), () => st2.dis, v => { st2.dis = v; drawForest(); });
+segmented($("f-out"), [["treated", "Traités contre non traités"], ["severe", "Sévères contre les autres"]], () => st2.out, v => { st2.out = v; drawForest(); });
+segmented($("f-an"), [["single", "Un groupe à la fois"], ["joint", "Tous les groupes ensemble"], ["dose", "Selon l'intensité"]], () => st2.an, v => { st2.an = v; drawForest(); });
+const expLabel = e => e === "n_groups" ? "Chaque groupe positif en plus" : shortLabel(GROUP_LABEL[e.replace("grp_", "")]);
+const bh = ps => { const o = ps.map((p, i) => [p, i]).sort((a, b) => a[0] - b[0]), q = new Array(ps.length); let m = 1;
+  for (let k = o.length - 1; k >= 0; k--) { m = Math.min(m, o[k][0] * o.length / (k + 1)); q[o[k][1]] = m; } return q; };
+const DOSE_OP = [0.45, 0.72, 1];
+const usable = l => l && l.n >= 10 && l.or > 0 && l.high / l.low < 60;
+function forestRows(f) {
+  if (st2.an === "single") return [...f.results].sort((a, b) => (a.exposure === "n_groups") - (b.exposure === "n_groups") || b.or - a.or)
+    .map(r => ({ label: expLabel(r.exposure), bold: r.exposure === "n_groups", pts: [{ ...r, sig: r.q < 0.05 }], or: r.or, stat: r.q < 0.001 ? "< 0,001" : fr(r.q, 3) }));
+  if (st2.an === "joint") return [...f.joint].sort((a, b) => b.or - a.or)
+    .map(r => ({ label: expLabel(r.exposure), pts: [{ ...r, sig: r.significant }], or: r.or, stat: r.significant ? "oui" : "non" }));
+  const ds = f.dose.filter(d => d.levels && d.levels.some(usable)), pv = [];
+  ds.forEach(d => d.levels.forEach(l => { if (usable(l)) pv.push(l.p); }));
+  const q = bh(pv); let j = 0;
+  return ds.map(d => {
+    const pts = d.levels.map((l, k) => usable(l) ? { ...l, sig: q[j++] < 0.05, k } : null), top = pts[2];
+    return { label: expLabel(d.exposure), or: top ? top.or : null, stat: top ? (q[j - 1] < 0.001 ? "< 0,001" : fr(q[j - 1], 3)) : "trop peu", pts };
+  }).sort((a, b) => (b.or ?? 0) - (a.or ?? 0));
+}
+function drawForest() {
+  const f = SV.factors.find(f => f.target === st2.dis && f.outcome === st2.out), svg = $("forest"), dose = st2.an === "dose";
+  const rows = forestRows(f);
+  const W = 900, left = 300, right = 150, rowH = dose ? 32 : 24, y0 = 34, x0 = left, x1 = W - right;
+  const lo = 0.25, hi = 16, lx = v => x0 + (Math.log(Math.min(Math.max(v, lo), hi)) - Math.log(lo)) / (Math.log(hi) - Math.log(lo)) * (x1 - x0);
+  const H = y0 + rows.length * rowH + 12;
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H); svg.replaceChildren();
+  for (const v of [0.25, 0.5, 1, 2, 4, 8, 16]) {
+    svg.append(svgEl("line", { x1: lx(v), x2: lx(v), y1: y0 - 10, y2: H - 6, stroke: v === 1 ? "var(--ink-2)" : "var(--line)", "stroke-width": v === 1 ? 1.5 : 1 }));
+    svg.append(svgEl("text", { x: lx(v), y: 16, "text-anchor": "middle", fill: "var(--muted)", "font-size": 11 }, fr(v, v < 1 ? 2 : 0)));
+  }
+  const statHead = { single: "q", joint: "signif.", dose: "q (fort)" }[st2.an];
+  svg.append(svgEl("text", { x: x1 + 70, y: 16, "text-anchor": "end", fill: "var(--muted)", "font-size": 11 }, dose ? "RC fort" : "RC"));
+  svg.append(svgEl("text", { x: x1 + 145, y: 16, "text-anchor": "end", fill: "var(--muted)", "font-size": 11 }, statHead));
+  rows.forEach((r, i) => {
+    const cy = y0 + i * rowH + rowH / 2, anySig = r.pts.some(p => p && p.sig);
+    if (r.bold) svg.append(svgEl("line", { x1: 0, x2: W - 10, y1: cy - rowH / 2, y2: cy - rowH / 2, stroke: "var(--line)" }));
+    svg.append(svgEl("text", { x: 0, y: cy + 4, fill: "var(--ink)", "font-size": 12.5, "font-weight": r.bold ? 600 : 400 }, r.label));
+    r.pts.forEach((p, k) => {
+      if (!p) return;
+      const yy = dose ? cy + (k - 1) * 9 : cy, color = p.sig ? "var(--pooled)" : "var(--neutral-mark)", op = dose ? DOSE_OP[k] : 1;
+      svg.append(svgEl("line", { x1: lx(p.low), x2: lx(p.high), y1: yy, y2: yy, stroke: color, "stroke-width": 2, "stroke-opacity": op }));
+      const c = svgEl("circle", { cx: lx(p.or), cy: yy, r: dose ? 4 : 5, fill: color, "fill-opacity": op, stroke: "var(--surface)", "stroke-width": 1.5 });
+      c.append(svgEl("title", {}, r.label + (dose ? ", intensité " + LV[k + 1].toLowerCase() + " (" + p.n + " patients)" : "") + " : rapport de cotes " + fr(p.or, 2) + " (IC 95 % " + fr(p.low, 2) + " à " + fr(p.high, 2) + ")"));
+      svg.append(c);
+    });
+    svg.append(svgEl("text", { x: x1 + 70, y: cy + 4, "text-anchor": "end", fill: anySig ? "var(--ink)" : "var(--muted)", "font-size": 12, "font-weight": anySig ? 600 : 400 }, r.or === null ? "—" : fr(r.or, 2)));
+    svg.append(svgEl("text", { x: x1 + 145, y: cy + 4, "text-anchor": "end", fill: "var(--muted)", "font-size": 11 }, r.stat));
+  });
+  const dis = { asthma: "un asthme", atopic_dermatitis: "une dermatite atopique", rhinitis: "une rhinite" }[st2.dis];
+  const de = { asthma: "d'un asthme", atopic_dermatitis: "d'une dermatite atopique", rhinitis: "d'une rhinite" }[st2.dis];
+  const what = st2.out === "severe" ? "à " + dis + " sévère" : "au fait d'être traité pour " + dis;
+  const cote = st2.out === "severe" ? de + " sévère" : "d'être traité pour " + dis;
+  const sigs = rows.filter(r => !r.bold && r.pts[r.pts.length - 1] && r.pts[r.pts.length - 1].sig);
+  const names = sigs.slice(0, 3).map(r => r.label.toLowerCase() + " (× " + fr(r.or, 1) + ")").join(", ");
+  if (st2.an === "single") {
+    const ng = f.results.find(r => r.exposure === "n_groups");
+    $("forest-finding").textContent = "Pris un par un, " + sigs.length + " groupe(s) sur 18 sont associés " + what + (sigs.length ? ", les plus forts étant " + names : "") + ". Chaque groupe positif en plus multiplie la cote par " + fr(ng.or, 2) + " : une partie de ces associations reflète simplement la polysensibilisation.";
+  } else if (st2.an === "joint") {
+    $("forest-finding").textContent = "Quand les 18 groupes sont mis ensemble dans un même modèle, chacun est jugé à sensibilisations égales par ailleurs. " + (sigs.length ? "Restent associés " + what + " : " + names + "." : "Aucun groupe ne reste associé " + what + " une fois les autres pris en compte.");
+  } else {
+    const grad = rows.filter(r => r.pts.every(Boolean) && r.pts[2].sig && r.pts[2].or > r.pts[1].or && r.pts[1].or > r.pts[0].or);
+    $("forest-finding").textContent = "Intensité : pour " + grad.length + " groupe(s) sur " + rows.length + ", la cote " + cote + " croît de l'intensité faible à forte" + (grad.length ? " (" + grad.slice(0, 3).map(r => r.label.toLowerCase() + " : × " + fr(r.pts[0].or, 1) + " → × " + fr(r.pts[2].or, 1)).join(", ") + ")" : "") + ". Un tel gradient renforce l'idée d'un lien réel plutôt que d'un hasard.";
+  }
+  const base = "Ajusté sur la tranche d'âge, le sexe et le centre (" + f.n_centres + " centres, " + fr(f.n) + " patients dont " + fr(f.n_positive) + " concernés). RC = rapport de cotes, échelle logarithmique ; 1 signifie aucune association. En bleu : significatif.";
+  $("forest-note").textContent = base + " " + {
+    single: "Une régression logistique par groupe ; significatif = q < 0,05 après correction de Benjamini-Hochberg sur les 18 groupes.",
+    joint: "Une seule régression logistique avec les 18 groupes, légèrement pénalisée pour rester stable ; intervalles par 200 rééchantillonnages (bootstrap) ; significatif = intervalle qui exclut 1.",
+    dose: "Par groupe, chaque niveau d'intensité est comparé aux patients négatifs à ce groupe. Trois points par ligne, du plus clair au plus foncé : faible (0,3 à 1), modéré (1 à 15), fort (15 et plus). Significatif = q < 0,05 après correction de Benjamini-Hochberg sur tous les niveaux. Un niveau qui compte moins de 10 patients, ou dont l'intervalle est trop large pour être lu, n'est pas tracé."
+  }[st2.an];
+}
+$("forest-lede").textContent = "Trois lectures complémentaires : chaque groupe pris seul, tous les groupes ensemble (qui distingue un groupe vraiment lié à la sévérité d'un groupe qui l'accompagne seulement), et l'effet de l'intensité des IgE.";
+
+/* ---------- 1. allergic profiles ---------- */
+const PR = DATA.profiles, IM = DATA.ige_models, OL = DATA.outcome_labels, GS = DATA.group_short;
+const PG = [...new Set(IM.features.filter(f => f.startsWith("int_")).map(f => f.slice(4, -2)))];   // group order of the IgE models
+const OUTK = IM.outcomes.map(o => o.key), FO = IM.outcomes.find(o => o.key === "food");
+const heatBg = v => "background:color-mix(in srgb, var(--pooled) " + Math.round(100 * Math.min(1, v)) + "%, var(--surface))" + (v > 0.55 ? ";color:#fff" : "");
+(function drawProfiles() {
+  const ps = PR.profiles, ref = PR.reference;
+  $("prof-lede").textContent = "Les " + fr(ps.reduce((s, p) => s + p.n, 0)) + " patients sont regroupés selon leur seul profil IgE (quels groupes sont positifs, et avec quelle intensité), sans regarder la clinique. Les pathologies sont ensuite comparées entre profils. Le découpage est stable : relancé avec d'autres tirages, il retrouve les mêmes groupes (indice de Rand ajusté " + fr(PR.stability_ari, 2) + ").";
+  const head = el("tr", {}, el("th", { text: "Groupe d'allergènes" }), ...ps.map((p, i) => el("th", { class: "p" }, p.name + (i === ref ? " (réf.)" : ""), el("span", { text: fr(p.n) + " patients" }))));
+  const rows = G.filter(g => PG.includes(g.key)).map(g => el("tr", {}, el("td", { text: shortLabel(g.label) }),
+    ...ps.map(p => { const v = p.prevalence[g.key]; return el("td", { class: "c", style: heatBg(v), text: fr(100 * v) + " %" }); })));
+  const info = [["Âge médian (ans)", p => fr(p.age_median)], ["Hommes", p => pct(p.male)], ["Groupes positifs (médiane)", p => fr(p.median_groups)], ["Positivités de forte intensité", p => pct(p.strong_share)]];
+  $("prof-heat").replaceChildren(el("thead", {}, head), el("tbody", {}, ...rows, ...info.map(([l, f]) => el("tr", {}, el("td", { text: l }), ...ps.map(p => el("td", { class: "c", text: f(p) }))))));
+  $("prof-out-lede").textContent = "Part des patients de chaque profil ayant la pathologie (parmi ceux pour qui elle est renseignée). Sous le pourcentage, le rapport de cotes par rapport au profil « " + ps[ref].name + " », à centre, âge et sexe égaux ; en gras quand il est significatif après correction de Benjamini-Hochberg.";
+  const oh = el("tr", {}, el("th", { text: "Pathologie" }), ...ps.map((p, i) => el("th", { class: "p", text: p.name + (i === ref ? " (réf.)" : "") })));
+  const orows = OUTK.map(k => el("tr", {}, el("td", { text: OL[k] }), ...ps.map((p, i) => {
+    const o = p.outcomes[k], vr = o.vs_reference;
+    const td = el("td", { class: "c" + (vr && vr.q < 0.05 ? " sig" : ""), style: heatBg(o.rate * 1.3), title: fr(o.n) + " patients renseignés" + (vr ? " ; RC " + fr(vr.or, 2) + " (IC 95 % " + fr(vr.low, 2) + " à " + fr(vr.high, 2) + "), q = " + vr.q : "") }, pct(o.rate));
+    td.append(el("small", { text: i === ref ? "réf." : vr ? "× " + fr(vr.or, vr.or >= 10 ? 0 : 1) + (vr.q < 0.05 ? "" : " ns") : "—" }));
+    return td;
+  })));
+  $("prof-out").replaceChildren(el("thead", {}, oh), el("tbody", {}, ...orows));
+  const best = OUTK.map(k => { const c = ps.map((p, i) => [p, p.outcomes[k].vs_reference]).filter(([, v]) => v && v.q < 0.05).sort((a, b) => b[1].or - a[1].or)[0]; return c ? [k, c[0], c[1]] : null; }).filter(Boolean);
+  const top = best.filter(([k]) => k.endsWith("_severe") || k === "food").map(([k, p, v]) => OL[k].toLowerCase() + " : « " + p.name + " » (× " + fr(v.or, 1) + ")");
+  $("prof-finding").textContent = "Le profil compte : à centre, âge et sexe égaux, les profils sensibilisés à beaucoup de groupes sont les plus souvent traités, et traités lourdement. Profil le plus à risque par rapport aux peu sensibilisés — " + top.join(" ; ") + ".";
+})();
+
+/* ---------- 2. from the IgE profile to pathologies ---------- */
+const st3 = { chip: 0, levels: Object.fromEntries(PG.map(g => [g, ({ grass: 3, tree: 2, mites: 2, animals: 1 })[g] || 0])), real: null };   // default example: pollen and mite sensitized child
+const pChip = $("p-chip");
+CHIPS.forEach((c, i) => pChip.append(el("option", { value: String(i), text: CL[i] })));
+pChip.onchange = () => { st3.chip = +pChip.value; st3.real = null; drawLevels(); updatePred(); };
+for (const id of ["p-age", "p-sex"]) $(id).addEventListener("input", () => { st3.real = null; updatePred(); });
+const LV = IM.intensity_levels, LV_SHORT = ["Nég.", "Faible", "Modéré", "Fort"];
+function measured(g) { return (META.group_sizes[g] || [1, 1, 1])[st3.chip] > 0; }
+function drawLevels() {
+  const box = $("p-groups"); box.replaceChildren();
+  for (const cat of CATS) {
+    const gs = G.filter(g => g.category === cat && PG.includes(g.key));
+    if (!gs.length) continue;
+    box.append(el("div", { class: "cat", text: cat }));
+    for (const g of gs) {
+      const ok = measured(g.key); if (!ok) st3.levels[g.key] = 0;
+      const seg = el("div", { class: "seg", role: "group", "aria-label": g.label });
+      if (ok) segmented(seg, LV.map((l, k) => [k, LV_SHORT[k]]), () => st3.levels[g.key], v => { st3.levels[g.key] = +v; st3.real = null; updatePred(); });
+      else seg.append(el("span", { class: "hint", text: "Non mesuré par " + CL[st3.chip] }));
+      box.append(el("div", { class: "lvl-row" + (ok ? "" : " na") }, el("span", { text: shortLabel(g.label) }), seg));
+    }
+  }
+}
+function predVector() {
+  const age = parseFloat($("p-age").value), sex = $("p-sex").value, on = new Set();
+  for (const g of PG) if (st3.levels[g] > 0) on.add("int_" + g + "_" + st3.levels[g]);
+  if (!isNaN(age)) { const b = META.age_bins.findIndex(r => age <= r[1]); on.add("age_" + (b < 0 ? META.age_bins.length - 1 : b)); }
+  if (sex === "1") on.add("male"); if (sex === "0") on.add("female");
+  on.add("chip_" + CHIPS[st3.chip]);
+  return IM.features.map(f => on.has(f) ? 1 : 0);
+}
+function nearestProfile() {
+  const v = PG.map(g => st3.levels[g] > 0 ? 1 : 0).concat(PG.map(g => st3.levels[g] / 3));
+  let best = 0, bd = Infinity;
+  PR.centroids.forEach((c, i) => { const d = c.reduce((s, x, j) => s + (x - v[j]) ** 2, 0); if (d < bd) { bd = d; best = i; } });
+  return best;
+}
+function updatePred() {
+  const x = predVector(), pi = nearestProfile(), prof = PR.profiles[pi];
+  const nPos = PG.filter(g => st3.levels[g] > 0).length;
+  $("p-profile").replaceChildren(
+    el("span", { class: "big", text: String(pi + 1) }),
+    el("span", { class: "cap", text: "Profil le plus proche : " + prof.name }),
+    el("span", { class: "sub", text: nPos + " groupe(s) positif(s) saisis. Ce profil regroupe " + fr(prof.n) + " patients ; " + pct(prof.outcomes.asthma_treated.rate) + " y sont traités pour un asthme, " + pct(prof.outcomes.food.rate) + " ont une allergie alimentaire déclarée." }));
+  const truth = st3.real === null ? null : IM.patients.outcomes;
+  const rows = IM.outcomes.map(o => {
+    const z = o.intercept + o.coef.reduce((s, c, j) => s + (x[j] ? c : 0), 0), p = 1 / (1 + Math.exp(-z)), yes = p >= o.threshold;
+    const gen = o.new_centre.auc >= 0.6 && o.new_centre.auc > o.new_centre_age_sex.auc + 0.02;
+    const d = el("details", { class: "row" });
+    const f1 = el("span", { class: "f1" }, "F1 ", el("b", { text: fr(o.f1, 2) }), " · centre nouveau ", el("b", { text: fr(o.new_centre.f1, 2) }), " · âge et sexe seuls " + fr(o.f1_age_sex, 2));
+    const name = el("span", { class: "name", text: o.label });
+    if (truth) { const t = truth[o.key][st3.real]; name.append(" ", el("span", { class: "truth", text: t === null || t === undefined ? "réel : non renseigné" : "réel : " + (t ? "oui" : "non") })); }
+    if (!gen) name.append(" ", el("span", { class: "pill", text: "ne se transpose pas", title: "Dans un centre nouveau, le modèle classe à peine mieux que le hasard (AUC " + fr(o.new_centre.auc, 2) + ") : l'association dépend du centre" }));
+    d.append(el("summary", {}, name, f1, el("span", { class: "bar" },
+      el("span", { class: "track" }, el("span", { class: "fill" + (yes ? "" : " no"), style: "width:" + (100 * p).toFixed(1) + "%" }),
+        el("span", { class: "tick", style: "left:" + (100 * o.threshold).toFixed(1) + "%", title: "Seuil de décision" })),
+      el("span", { class: "pct", text: pct(p) }), el("span", { class: "verdict" + (yes ? " yes" : ""), text: yes ? "Probable" : "Peu probable" }))));
+    const parts = o.coef.map((c, j) => [c, IM.features[j]]).filter(([, f], j) => x[j] && f.startsWith("int_")).sort((a, b) => Math.abs(b[0]) - Math.abs(a[0])).slice(0, 4);
+    const why = el("div", { class: "why" });
+    why.append(el("span", { text: pct(o.prevalence) + " des " + fr(o.n) + " patients renseignés ont cette pathologie. Seuil de décision : " + pct(o.threshold) + ". AUC " + fr(o.auc, 2) + " dans les mêmes centres, " + fr(o.new_centre.auc, 2) + " dans un centre nouveau." }));
+    if (parts.length) { const ul = el("ul"); for (const [c, f] of parts) { const g = f.slice(4, -2), l = +f.slice(-1); ul.append(el("li", {}, shortLabel(GROUP_LABEL[g]) + ", intensité " + LV[l].toLowerCase() + " ", el("span", { class: "num", text: "(cote × " + fr(Math.exp(c), 2) + ")" }))); } why.append(el("span", { text: "Ce qui pèse le plus :" }), ul); }
+    why.append(el("span", { text: "F1 par puce : " + CHIPS.map((c, i) => CL[i] + " " + (o.f1_by_chip[c] == null ? "—" : fr(o.f1_by_chip[c], 2))).join(", ") + ". Réf. (tout le monde déclaré malade) : " + fr(o.f1_always_positive, 2) + "." }));
+    d.append(why); return d;
+  });
+  $("p-rows").replaceChildren(...rows);
+  $("p-foot").textContent = "Trois F1 par ligne. Le premier : validation croisée stratifiée (5 plis tirés au hasard, chaque pli a la même proportion de malades et de chaque puce), donc des patients des mêmes centres qu'à l'entraînement. Le deuxième : le modèle est entraîné sur 10 centres et testé sur le 11e, à tour de rôle ; c'est ce qu'on peut attendre dans un hôpital qui n'a pas fourni de données. Le troisième : le même modèle avec seulement l'âge, le sexe et la puce, pour mesurer ce que le profil IgE apporte. « Ne se transpose pas » signale une pathologie que le modèle ne classe plus correctement dans un centre nouveau (AUC sous 0,6) : l'association observée tient aux pratiques des centres. Pour l'allergie alimentaire, déclarée par " + pct(FO.prevalence) + " des patients, le F1 reste proche de celui obtenu en déclarant tout le monde allergique (" + fr(FO.f1_always_positive, 2) + ") ; c'est l'AUC (" + fr(FO.auc, 2) + ", et " + fr(FO.new_centre.auc, 2) + " dans un centre nouveau contre " + fr(FO.new_centre_age_sex.auc, 2) + " avec l'âge et le sexe seuls) qui montre l'apport du profil IgE.";
+}
+$("p-real").onclick = () => {
+  const n = IM.patients.age.length; let i, tries = 0;
+  do { i = Math.floor(Math.random() * n); tries++; } while (tries < 50 && IM.patients.levels[i].every(v => v === 0));
+  st3.real = i; st3.chip = IM.patients.chip[i]; pChip.value = String(st3.chip);
+  $("p-age").value = IM.patients.age[i] ?? ""; $("p-sex").value = IM.patients.sex[i] == null ? "" : String(IM.patients.sex[i]);
+  PG.forEach((g, j) => st3.levels[g] = IM.patients.levels[i][j]);
+  drawLevels(); updatePred(); st3.real = i;
+  $("p-real-note").textContent = "Patient réel n° " + (i + 1) + " de la base : ses résultats de puce sont chargés, et chaque ligne affiche ce qui a été réellement observé chez lui. Modifier une saisie efface cette comparaison.";
+};
+$("p-clear").onclick = () => { PG.forEach(g => st3.levels[g] = 0); st3.real = null; $("p-real-note").textContent = ""; drawLevels(); updatePred(); };
+
+/* ---------- F1 ceiling ---------- */
+const CE = DATA.ceiling.variants, base = CE.find(v => v.key === "base").f1_mean, best = Math.max(...CE.map(v => v.f1_mean));
+$("ceil-lede").textContent = "Non, pas avec les données cliniques disponibles : nous avons essayé d'ajouter des informations et de changer de modèle, et le F1 moyen ne bouge que de " + fr(best - base, 3) + " au mieux. La limite vient de ce que contiennent les réponses cliniques, pas de la méthode. C'est pourquoi la page part du profil IgE (parties 1 à 3) : c'est lui qui apporte de l'information nouvelle.";
+$("ceil").replaceChildren(el("thead", {}, el("tr", {}, el("th", { text: "Variante" }), el("th", { class: "n", text: "F1 moyen (18 groupes)" }), el("th", { class: "n", text: "Écart" }))),
+  el("tbody", {}, ...CE.map(v => el("tr", {}, el("td", { text: v.label }), el("td", { class: "n", text: fr(v.f1_mean, 3) }),
+    el("td", { class: "n", text: v.key === "base" ? "—" : (v.f1_mean - base >= 0 ? "+" : "−") + fr(Math.abs(v.f1_mean - base), 3) })))));
+
+/* ---------- notes ---------- */
+for (const t of [
+  "Intensité d'un groupe : l'IgE la plus élevée parmi ses allergènes mesurés par la puce du patient, classée négative (< 0,3), faible (0,3 à 1), modérée (1 à 15) ou forte (≥ 15), selon les classes de la puce ISAC.",
+  "Profils : k-moyennes à " + PR.k + " groupes sur 36 variables par patient (18 groupes positifs ou non, et leur intensité ramenée entre 0 et 1). Aucune donnée clinique n'entre dans le découpage.",
+  "Comparaisons entre profils et facteurs de sévérité : régressions logistiques ajustées sur la tranche d'âge, le sexe et le centre (effets fixes), correction de Benjamini-Hochberg.",
+  "Prédiction : une régression logistique par pathologie, avec en entrée 54 cases d'intensité (18 groupes × 3 niveaux), l'âge, le sexe et la puce ; seuil de décision réglé pour le meilleur F1 sans voir les patients de test.",
+  "Centre = lettres de l'identifiant patient (11 centres). Le test « centre nouveau » entraîne sur 10 centres et évalue sur le 11e, à tour de rôle."]) $("note-ige").append(el("li", { text: t }));
+for (const t of [
+  "Une régression logistique par groupe d'allergènes et par variante : un modèle commun aux trois puces (la puce est une entrée) et un modèle par puce.",
+  "Entrées : " + M.features.length + " cases à 0 ou 1 (tranche d'âge, sexe, habitat, symptômes cutanés, traitements, âge de début d'allergie alimentaire, cofacteurs), plus 3 cases pour la puce dans le modèle commun.",
+  "Cible : au moins une IgE ≥ 0,3 parmi les allergènes du groupe mesurés par la puce du patient.",
+  "Entraînement sur les " + fr(M.n_train) + " patients ayant au moins une donnée clinique renseignée. Régularisation L2 (C = " + fr(M.c_regularization, 1) + ")."]) $("note-model").append(el("li", { text: t }));
+for (const t of [
+  "Le F1 résume en un nombre, de 0 à 1, la précision d'un modèle (ses alertes sont-elles justes ?) et son rappel (trouve-t-il tous les cas ?).",
+  "Il se mesure sur un ensemble de patients, pas sur une personne : chaque ligne affiche le F1 du modèle qui produit l'estimation, sur la puce choisie.",
+  "Validation croisée imbriquée : seuil de décision réglé sans jamais voir les patients de test.",
+  "« réf. » est le F1 obtenu en déclarant tout le monde sensibilisé. Un modèle n'apporte quelque chose que s'il fait mieux."]) $("note-f1").append(el("li", { text: t }));
+
+/* ---------- start ---------- */
+const redraw = () => { drawPerf(); drawForest(); };
+new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+fill(PRESETS[0][1]); update(); drawPerf(); drawTable();
+drawForest(); drawLevels(); updatePred();
+})();
+</script>
+</body>
+</html>

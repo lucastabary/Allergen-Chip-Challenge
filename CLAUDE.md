@@ -36,6 +36,30 @@ Full summary of the challenge (context, question, data warnings, suggested deliv
   - `resources/iuis_allergens.tsv`: extract of the WHO/IUIS database (allergen.org) for our 241 columns,
     with an `origin` column (`iuis`, `iuis_species`, `manual`). allergen.org blocks scripted downloads,
     so this extract is committed; cite https://www.allergen.org when using it.
+  - `features.py`: `common_allergens()` (the 91 columns on all chips), `positivity()`, the clinical
+    codebook (`CLINICAL_FIELDS`, French labels), `encode_clinical()` (44 one-hot inputs) and the 18
+    `TARGET_GROUPS`: `allergen_group()` maps 235 of the 241 columns to a group (food split by protein
+    family), `EXCLUDED_ALLERGENS` lists the other 6 with a reason, `sensitization_targets()` uses all
+    the group's allergens on each patient's own chip (NaN when the chip has none: venoms on ISAC v2).
+  - `features.py` also has `group_intensity()` (level 0-3 per group: max IgE on the own chip, bounds
+    `INTENSITY_BOUNDS` 0.3/1/15), `food_allergy()` and `encode_intensity()` (68 inputs: 18 groups x 3
+    levels, age band, sex, chip).
+  - `modeling.py`: shared logistic-regression helpers (F1-max threshold, nested stratified CV
+    `evaluate_group()`, leave-one-centre-out `evaluate_new_centre()`).
+  - `profiles.py`: the IgE-first analyses. `allergic_profiles()` (k-means k=8 on flags + intensity,
+    ARI stability, pathologies with centre-adjusted ORs vs the barely-sensitized profile),
+    `severity_factors()` (per group, joint penalized model with bootstrap CI, dose by intensity
+    level), `fit_profile_models()` (IgE profile -> 7 pathology outcomes, F1 same centres and new
+    centre, age/sex baseline).
+  - `atlas.py`: builds the deliverable, a self-contained HTML page (profiles, IgE -> pathology
+    prediction, severity factors, then the secondary clinical simulator, its scores and the
+    allergen list). Clinical simulator: per group a pooled logistic regression (chip as an input)
+    and one model per chip, scored by nested CV; `fit_degree_target()` is a multinomial model of a
+    disease's degree from the OTHER clinical answers + chip. `ceiling_experiments()` documents that
+    region, month, C and boosting do not raise the sensitization F1. Run `uv run acc-atlas`
+    (about 10 minutes).
+  - `resources/atlas_template.html`: page template (French UI); data is inlined at the
+    `/*__ATLAS_DATA__*/null` marker. Edit the template, never the generated page.
 - `notebooks/`: exploration. Name them `NN_initials_topic.ipynb` (e.g. `01_lt_eda.ipynb`).
 - `data/raw/`, `data/processed/`: git-ignored, never commit data.
 - `reports/figures/`: exported figures and deliverables.
@@ -52,6 +76,14 @@ Full summary of the challenge (context, question, data warnings, suggested deliv
 - Code `9` means "not provided" (`Non renseigné`) in the clinical categorical columns.
 - `Chip_Type`: ISAC_V1 (2,351), ALEX (1,139), ISAC_V2 (781). ISAC chips cover 112 allergens, ALEX 223,
   so a NaN in an IgE column is usually structural (allergen not on that chip), not a missing measurement.
+- `General_cofactors` has no code 9: `0` mixes "none known" and "not provided". Its code `10`
+  ("pet rodent" in the codebook) is carried by 918 patients, almost all from four centres: treated as
+  a centre artefact and kept out of the models.
+- Treatment-based severity is centre-driven: 83 of the 96 severe atopic dermatitis patients come
+  from centre XPW (`centre_of()`: letters of Patient_ID). Always check a severity result with
+  leave-one-centre-out validation or centre fixed effects.
+- `Age_of_onsets` (age at food-allergy onset) is binned in the source data, the last bin being
+  "after 20 years" (150 training patients, aged 21 to 84): it cannot be refined.
 - Codebooks: `data/raw/acc-dictionnaire-final.xls` (French, category codes) and
   `data/raw/dictionnaire-acc-english.pdf` (only the yellow variables exist in the data; blue diagnostic
   variables were removed).
