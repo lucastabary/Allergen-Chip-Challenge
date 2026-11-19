@@ -38,3 +38,15 @@ def test_common_panel_and_shuffled_target():
     # same labels per chip, different order
     assert (y.groupby(df["Chip_Type"]).mean() == s.groupby(df["Chip_Type"]).mean()).all()
     assert (y.dropna() != s.dropna()).any()
+
+
+def test_score_calibration_stats_on_calibrated_data():
+    from acc.score import calibration_stats, wilson
+
+    rng = np.random.default_rng(0)
+    p = rng.uniform(0.05, 0.95, 20000)
+    y = (rng.uniform(size=p.size) < p).astype(int)
+    cal = calibration_stats(y, p)
+    assert abs(cal["cal_intercept"]) < 0.05 and abs(cal["cal_slope"] - 1) < 0.05
+    lo, hi = wilson(5, 10)
+    assert lo < 0.5 < hi and 0 <= lo and hi <= 1
