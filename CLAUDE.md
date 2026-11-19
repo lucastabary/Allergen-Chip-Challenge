@@ -36,6 +36,20 @@ Full summary of the challenge (context, question, data warnings, suggested deliv
   - `resources/iuis_allergens.tsv`: extract of the WHO/IUIS database (allergen.org) for our 241 columns,
     with an `origin` column (`iuis`, `iuis_species`, `manual`). allergen.org blocks scripted downloads,
     so this extract is committed; cite https://www.allergen.org when using it.
+  - `predict.py`: clinical targets built from the coded columns (`TARGETS`, with a positive control
+    `adult` and a negative control `shuffled`), nested feature sets (`demo`, `pfam` = positives per
+    protein family, `summary`, `ige` = 91 allergens common to the 3 chips), repeated stratified CV with
+    logistic regression and gradient boosting, Nadeau-Bengio corrected t-tests + BH.
+    `python -m acc.predict run --out runs/x --repeats 10` then `report runs/x`.
+  - `experiments.py`: `screen` (one adjusted logistic per target x allergen, with and without
+    adjustment for polysensitization), `importance` (permutation importance under CV), `transport`
+    (leave-one-region-out).
+- `relay.toml` + `scripts/chav.sh`: run the heavy jobs on Chav, a remote 12-CPU machine driven by the
+  `relay` agent of Lucas's priism project (reference: `C:\Users\lucas\Projects\priism-cleave\docs\chav-agent.md`).
+  `bash scripts/chav.sh push <branch>` ships a committed branch (signed bundle) and runs the tests there;
+  `bash scripts/chav.sh job MAXMIN runs/x acc/predict run --out runs/x ...` submits a CPU job and pulls
+  its results into `data/processed/runs/x`. Jobs run one at a time; never push while an acc job runs.
+  Only the commands declared in `relay.toml` can run. The data is downloaded on the machine.
 - `notebooks/`: exploration. Name them `NN_initials_topic.ipynb` (e.g. `01_lt_eda.ipynb`).
 - `data/raw/`, `data/processed/`: git-ignored, never commit data.
 - `reports/figures/`: exported figures and deliverables.
