@@ -1,0 +1,23 @@
+# Jobs this project exposes to the Chav relay runner (reference: priism-cleave/docs/chav-agent.md).
+# Job kinds are acc/<job>; arguments are appended to argv and must be safe relative strings.
+# Jobs run in <cache>/acc/ ; --out runs/<name> is relative to it. The data is downloaded from
+# data.gouv.fr into the checkout on first use.
+
+[project]
+name = "acc"
+env_prefix = "ACC_"
+
+[setup]  # after each acc/update, in the checkout, with the project venv first on PATH
+commands = [
+  ["python", "-m", "pip", "install", "-q", "-e", "."],
+  ["python", "-m", "pip", "install", "-q", "pytest"],
+  ["python", "-m", "acc.data"],
+]
+
+[jobs.predict]   # CPU: python -m acc.predict run --out runs/v1 --repeats 10 --jobs 12
+argv = ["python", "-m", "acc.predict"]
+first = ["run", "report"]
+
+[jobs.pytest]    # CPU: the test suite, on the machine
+argv = ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "{repo}/tests"]
+max_args = 0
