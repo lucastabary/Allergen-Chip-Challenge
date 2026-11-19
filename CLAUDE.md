@@ -44,6 +44,9 @@ Full summary of the challenge (context, question, data warnings, suggested deliv
   - `experiments.py`: `screen` (one adjusted logistic per target x allergen, with and without
     adjustment for polysensitization), `importance` (permutation importance under CV), `transport`
     (leave-one-region-out).
+  - `score.py`: storage-protein score for food anaphylaxis (number of positive 2S albumins + 11S
+    legumins on the common panel): risk by level, threshold metrics with bootstrap CIs, CV calibration
+    (intercept, slope, ECE), leave-one-region-out calibration. `python -m acc.score --out runs/score`.
 - `relay.toml` + `scripts/chav.sh`: run the heavy jobs on Chav, a remote 12-CPU machine driven by the
   `relay` agent of Lucas's priism project (reference: `C:\Users\lucas\Projects\priism-cleave\docs\chav-agent.md`).
   `bash scripts/chav.sh push <branch>` ships a committed branch (signed bundle) and runs the tests there;
