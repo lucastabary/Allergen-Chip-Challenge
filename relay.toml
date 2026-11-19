@@ -18,6 +18,10 @@ commands = [
 argv = ["python", "-m", "acc.predict"]
 first = ["run", "report"]
 
+[jobs.experiment]  # CPU: python -m acc.experiments screen|importance|transport --out runs/x ...
+argv = ["python", "-m", "acc.experiments"]
+first = ["screen", "importance", "transport"]
+
 [jobs.pytest]    # CPU: the test suite, on the machine
 argv = ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "{repo}/tests"]
 max_args = 0

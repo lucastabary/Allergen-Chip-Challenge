@@ -35,7 +35,7 @@ from sklearn.preprocessing import StandardScaler
 from statsmodels.stats.multitest import multipletests
 from threadpoolctl import threadpool_limits
 
-from acc.allergens import family_of
+from acc.allergens import family_of, protein_family_of
 from acc.data import DATA_FILE, download, load_raw, split_columns
 
 UNKNOWN = 9  # "Non renseigné" / "sans objet" in the clinical columns
@@ -243,7 +243,29 @@ def summary_features(df: pd.DataFrame, panel: list[str]) -> pd.DataFrame:
     return out
 
 
+STORAGE = {"2S albumin", "7S vicilin", "11S legumin"}
+
+
+def protein_family_features(df: pd.DataFrame, panel: list[str]) -> pd.DataFrame:
+    """Number of positive allergens per protein family (PR-10, nsLTP, storage proteins...).
+
+    Component-resolved diagnosis reads profiles this way: stable proteins (seed storage proteins,
+    nsLTP) are linked to systemic reactions, labile ones (PR-10, profilin) to mild oral symptoms.
+    Families with a single allergen on the panel are pooled into "other".
+    """
+    pos = df[panel] >= POSITIVITY
+    fam = pd.Series({c: protein_family_of(c) for c in panel})
+    fam = fam.mask(fam.map(fam.value_counts()) < 2, "other")
+    out = pd.DataFrame(index=df.index)
+    for name, cols in fam.groupby(fam).groups.items():
+        out[f"pfam_{name}"] = pos[list(cols)].sum(axis=1)
+    out["pfam_storage_all"] = pos[[c for c in panel if protein_family_of(c) in STORAGE]].sum(axis=1)
+    out["npos_total"] = pos.sum(axis=1)
+    return out
+
+
 FEATURE_SETS = ["demo", "summary", "ige", "demo+summary", "demo+ige"]
+EXTRA_FEATURE_SETS = ["pfam", "demo+pfam"]
 
 
 def build_features(df: pd.DataFrame, feature_set: str, panel: list[str]) -> pd.DataFrame:
@@ -256,6 +278,8 @@ def build_features(df: pd.DataFrame, feature_set: str, panel: list[str]) -> pd.D
             parts.append(summary_features(df, panel))
         elif part == "ige":
             parts.append(ige_features(df, panel))
+        elif part == "pfam":
+            parts.append(protein_family_features(df, panel))
         else:
             raise ValueError(feature_set)
     if "demo" not in feature_set:
@@ -429,6 +453,8 @@ COMPARISONS = [  # (better candidate, reference): "does the candidate add inform
     ("demo+summary", "demo"),
     ("demo+ige", "demo+summary"),
     ("ige", "summary"),
+    ("demo+pfam", "demo"),
+    ("demo+ige", "demo+pfam"),
 ]
 
 
@@ -475,7 +501,9 @@ def report(out: Path) -> str:
         )
         lines += [
             f"## {metric} (mean ± sd over folds)",
-            table.reindex(columns=FEATURE_SETS).to_string(),
+            table.reindex(
+                columns=[f for f in FEATURE_SETS + EXTRA_FEATURE_SETS if f in table]
+            ).to_string(),
             "",
         ]
     within = folds_df.assign(auc_within=folds_df[[f"auc_{c}" for c in CHIPS]].mean(axis=1))
@@ -486,7 +514,9 @@ def report(out: Path) -> str:
     )
     lines += [
         "## AUC within chip (mean of the per-chip AUCs)",
-        table.reindex(columns=FEATURE_SETS).to_string(),
+        table.reindex(
+            columns=[f for f in FEATURE_SETS + EXTRA_FEATURE_SETS if f in table]
+        ).to_string(),
         "",
     ]
     c = compare(folds_df)
