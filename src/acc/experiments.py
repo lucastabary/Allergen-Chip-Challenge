@@ -1,9 +1,10 @@
 """Follow-up experiments on the clinical targets of `acc.predict`.
 
 python -m acc.experiments screen --out runs/screen
-    One adjusted logistic regression per (target, allergen): y ~ positive(allergen) + age + chip
-    One adjusted logistic regression per (target, allergen): y ~ positive(allergen) + age
-    95 % CI, BH q-values per target.
+    One logistic regression per (target, allergen), on the patients whose chip measures that
+    allergen (full 241 panel): y ~ positive(allergen) + age + age^2 + chip + region ("demo"), and
+    the same + log(1 + number of other positive allergens) ("demo+npos"), which separates a
+    specific marker from general polysensitization. Odds ratios, Wald 95 % CI, BH q per target.
 python -m acc.experiments importance --out runs/imp --targets food_anaphylaxis [--repeats 3]
     Which allergens the demo+ige gradient boosting relies on: permutation importance (drop in
     held-out AUC when one IgE column is shuffled) over repeated 5-fold CV.
@@ -61,7 +62,7 @@ def _target_frame(df: pd.DataFrame, name: str) -> tuple[pd.DataFrame, np.ndarray
 # ---------------------------------------------------------------------------
 
 
-def _screen_one(name: str, allergen: str, sub: pd.DataFrame, y: np.ndarray, min_pos: int):
+def _screen_one(name, allergen, sub, y, min_pos, npos, adjust):
     measured = sub[allergen].notna().to_numpy()
     x = (sub[allergen] >= POSITIVITY).to_numpy()[measured].astype(float)
     yy = y[measured]
@@ -78,6 +79,8 @@ def _screen_one(name: str, allergen: str, sub: pd.DataFrame, y: np.ndarray, min_
         cols = [c for c in covars if c.startswith(prefix)]
         if cols:
             covars = covars.drop(columns=cols[0])
+    if adjust == "demo+npos":
+        covars["log_npos_other"] = np.log1p(npos[measured] - x)
     X = sm.add_constant(pd.concat([pd.Series(x, index=covars.index, name="pos"), covars], axis=1))
     ok = X.notna().all(axis=1).to_numpy()
     with warnings.catch_warnings():
@@ -91,6 +94,7 @@ def _screen_one(name: str, allergen: str, sub: pd.DataFrame, y: np.ndarray, min_
         return None
     return dict(
         target=name,
+        adjustment=adjust,
         allergen=allergen,
         family=family_of(allergen),
         n=int(ok.sum()),
@@ -110,19 +114,25 @@ def _screen_one(name: str, allergen: str, sub: pd.DataFrame, y: np.ndarray, min_
 def screen(out: Path, targets: list[str], min_pos: int, jobs: int) -> pd.DataFrame:
     df = _load()
     _, ige = split_columns(df)
+    panel = common_panel(df)
     tasks = []
     for name in targets:
         sub, y = _target_frame(df, name)
-        tasks += [(name, a, sub, y, min_pos) for a in ige]
+        # positives on the common panel: the same 91 allergens whatever the chip
+        npos = (sub[panel] >= POSITIVITY).sum(axis=1).to_numpy().astype(float)
+        for adjust in ("demo", "demo+npos"):
+            tasks += [(name, a, sub, y, min_pos, npos, adjust) for a in ige]
     rows = Parallel(n_jobs=jobs)(delayed(_screen_one)(*t) for t in tasks)
     res = pd.DataFrame([r for r in rows if r is not None])
-    res["q"] = res.groupby("target")["p"].transform(lambda p: multipletests(p, method="fdr_bh")[1])
-    res = res.sort_values(["target", "p"])
+    res["q"] = res.groupby(["target", "adjustment"])["p"].transform(
+        lambda p: multipletests(p, method="fdr_bh")[1]
+    )
+    res = res.sort_values(["target", "adjustment", "p"])
     out.mkdir(parents=True, exist_ok=True)
     res.to_csv(out / "screen.csv", index=False)
-    print(res.groupby("target").apply(lambda g: (g.q < 0.05).sum(), include_groups=False))
-    for name, g in res.groupby("target"):
-        print(f"\n## {name}: top allergens (q < 0.05)")
+    print(res.groupby(["target", "adjustment"])["q"].apply(lambda q: (q < 0.05).sum()))
+    for (name, adjust), g in res.groupby(["target", "adjustment"]):
+        print(f"\n## {name}, adjusted for {adjust}: top allergens (q < 0.05)")
         cols = ["allergen", "family", "n_pos", "odds_ratio", "ci_low", "ci_high", "q"]
         print(g[g.q < 0.05].head(15)[cols].round(4).to_string(index=False))
     return res
