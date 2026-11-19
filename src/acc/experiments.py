@@ -224,7 +224,7 @@ def transport(out: Path, targets: list[str], min_test: int, jobs: int) -> pd.Dat
             for r, n in pd.Series(region).value_counts().items()
             if n >= min_test and len(set(y[region == r])) == 2 and (y[region == r] == 1).sum() >= 10
         ]
-        for fs in ["demo", "demo+summary", "demo+ige", "ige"]:
+        for fs in ["demo", "demo+npos", "demo+pfam", "demo+ige"]:
             Xdf = build_features(sub, fs, panel).drop(columns=list(TARGETS[name].exclude))
             Xdf = Xdf.drop(columns=[c for c in Xdf if c.startswith("region_")])
             X = Xdf.to_numpy(float)

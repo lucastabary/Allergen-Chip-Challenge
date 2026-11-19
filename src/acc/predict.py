@@ -141,6 +141,13 @@ TARGETS: dict[str, Target] = {
             _not_none,
         ),
         Target(
+            "rhinitis_severe",
+            "Treatment_of_rhinitis",
+            "Among treated rhinitis: local or systemic corticosteroids (3-4) vs anti-H1 only",
+            _any(3, 4),
+            subset=_not_none,
+        ),
+        Target(
             "ad_treatment",
             "Treatment_of_atopic_dematitis",
             "Any atopic dermatitis treatment (codes 1-7) vs none (0)",
@@ -265,7 +272,21 @@ def protein_family_features(df: pd.DataFrame, panel: list[str]) -> pd.DataFrame:
 
 
 FEATURE_SETS = ["demo", "summary", "ige", "demo+summary", "demo+ige"]
-EXTRA_FEATURE_SETS = ["pfam", "demo+pfam"]
+
+
+def npos_features(df: pd.DataFrame, panel: list[str]) -> pd.DataFrame:
+    """How much, not what: total number of positive allergens and the highest level.
+
+    The baseline for "does the type of protein matter beyond the amount of sensitization?".
+    """
+    pos = df[panel] >= POSITIVITY
+    return pd.DataFrame(
+        {"npos_total": pos.sum(axis=1), "log_max_ige": np.log1p(df[panel].max(axis=1))},
+        index=df.index,
+    )
+
+
+EXTRA_FEATURE_SETS = ["npos", "demo+npos", "pfam", "demo+pfam"]
 
 
 def build_features(df: pd.DataFrame, feature_set: str, panel: list[str]) -> pd.DataFrame:
@@ -278,6 +299,8 @@ def build_features(df: pd.DataFrame, feature_set: str, panel: list[str]) -> pd.D
             parts.append(summary_features(df, panel))
         elif part == "ige":
             parts.append(ige_features(df, panel))
+        elif part == "npos":
+            parts.append(npos_features(df, panel))
         elif part == "pfam":
             parts.append(protein_family_features(df, panel))
         else:
@@ -455,6 +478,8 @@ COMPARISONS = [  # (better candidate, reference): "does the candidate add inform
     ("ige", "summary"),
     ("demo+pfam", "demo"),
     ("demo+ige", "demo+pfam"),
+    ("demo+npos", "demo"),
+    ("demo+pfam", "demo+npos"),
 ]
 
 
