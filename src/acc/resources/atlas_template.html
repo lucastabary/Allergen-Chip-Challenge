@@ -153,6 +153,10 @@ table.heat td.c small { display: block; font-size: 11px; }
 table.heat td.c.sig small { font-weight: 600; }
 table.heat th.p { min-width: 92px; text-align: center; font-weight: 600; color: var(--ink); }
 table.heat th.p span { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; }
+/* profiles: allergen bars (same layout as the PCA loadings of notebook 02) */
+.bars-wrap { overflow-x: auto; }
+.bars-wrap svg { display: block; width: 100%; min-width: 900px; height: auto; }
+.bars-wrap rect.bar:hover { stroke: var(--ink); stroke-width: 1; }
 /* level pickers */
 .levels { display: flex; flex-direction: column; gap: 4px; }
 .lvl-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 13px; }
@@ -365,6 +369,12 @@ details.annex[open] > summary { border-bottom: 1px solid var(--line); }
     <h3>Résultat : ce qui définit chacun des huit profils</h3>
     <p class="hint" id="prof-lede"></p>
     <div class="table-wrap" style="max-height:none"><table class="heat" id="prof-heat"></table></div>
+  </div>
+  <div class="panel">
+    <h3>Le même résultat, allergène par allergène</h3>
+    <p class="hint" id="prof-bars-lede"></p>
+    <div class="legend" id="prof-bars-legend"></div>
+    <div class="bars-wrap"><svg id="prof-bars" role="img" aria-label="Écart de chaque profil à la cohorte, allergène par allergène"></svg></div>
   </div>
   <div class="panel">
     <h3>Puis on regarde les maladies de chaque profil</h3>
@@ -806,6 +816,60 @@ $("facts").append(
   const poly = ps.find(p => p.name === "Polysensibilisés");
   const ad = poly && poly.outcomes.atopic_dermatitis_severe.vs_reference, food = poly && poly.outcomes.food.vs_reference;
   $("prof-finding").textContent = "Le profil compte : les patients sensibilisés à beaucoup de familles sont les plus souvent traités, et traités lourdement." + (ad ? " Les polysensibilisés ont une cote de dermatite atopique sévère × " + fr(ad.or, 0) + " et d'allergie alimentaire × " + fr(food.or, 0) + " par rapport aux peu sensibilisés." : "");
+})();
+
+/* ---------- 1. profiles allergen by allergen ---------- */
+(function drawProfileBars() {
+  const AL = PR.allergens;
+  if (!AL) return;
+  const ps = PR.profiles, ref = PR.reference, n = AL.columns.length;
+  // one colour per group, neighbours in TARGET_GROUPS order kept apart (Tableau 20 pairs)
+  const GC = { grass: "#4e79a7", tree: "#a0cbe8", weed: "#59a14f", mites: "#8cd17d", animals: "#b6992d",
+    molds: "#f1ce63", insects: "#499894", storage: "#e15759", ltp: "#ff9d9a", pr10: "#f28e2b",
+    plant_other: "#ffbe7d", egg: "#d37295", milk: "#fabfd2", fish: "#79706e", seafood: "#9d7660",
+    meat: "#d7b5a6", venoms: "#b07aa1", latex: "#bab0ac" };
+  const present = [...new Set(AL.groups)];
+  const missing = G.filter(g => !present.includes(g.key)).map(g => shortLabel(g.label).toLowerCase());
+  const name = Object.fromEntries(A.map(a => [a.column, a.name]));
+  $("prof-bars-lede").textContent = "Chaque ligne est un profil, chaque barre un allergène, rangé et coloré par famille, comme les composantes de l'ACP. " +
+    "Hauteur : part des patients du profil positifs à l'allergène, moins cette part dans toute la cohorte (en points). Au-dessus de zéro, l'allergène caractérise le profil ; en dessous, il y est plus rare que la moyenne. " +
+    n + " allergènes mesurés sur les trois puces, pour que chaque patient compte dans chaque barre" + (missing.length ? " (aucun " + missing.join(" ni ") + " dans ce panel commun)" : "") + ". Survolez une barre pour son nom.";
+  $("prof-bars-legend").replaceChildren(...present.map(k => el("span", {}, el("span", { class: "sw", style: "background:" + GC[k] }), shortLabel(GROUP_LABEL[k]))));
+
+  const diffs = AL.by_profile.map(row => row.map((v, j) => v - AL.cohort[j]));
+  // shared scale for all rows, cut at the largest rise and the largest drop (a drop is bounded by the cohort rate)
+  const up = Math.ceil(10 * Math.max(...diffs.flat())) / 10, down = Math.ceil(10 * Math.max(...diffs.flat().map(v => -v))) / 10;
+  const W = 1180, L = 52, R = 8, step = (W - L - R) / n, TITLE = 20, K = 130, PH = K * (up + down), GAP = 14, NAMES = 64;
+  const H = 6 + ps.length * (TITLE + PH + GAP) + NAMES;
+  const svg = $("prof-bars");
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.replaceChildren();
+  const x = j => L + j * step;
+  // group separators across all rows
+  for (let j = 1; j < n; j++) if (AL.groups[j] !== AL.groups[j - 1])
+    svg.append(svgEl("line", { x1: x(j), x2: x(j), y1: 6, y2: H - NAMES + 4, stroke: "var(--line)", "stroke-dasharray": "2 3" }));
+  ps.forEach((p, i) => {
+    const top = 6 + i * (TITLE + PH + GAP), y0 = top + TITLE + K * up, Y = v => y0 - K * v;
+    svg.append(svgEl("text", { x: L, y: top + 13, fill: "var(--ink)", "font-size": 13, "font-weight": 600 }, (i + 1) + ". " + p.name + (i === ref ? " (réf.)" : "")));
+    svg.append(svgEl("text", { x: W - R, y: top + 13, "text-anchor": "end", fill: "var(--muted)", "font-size": 11.5 }, fr(p.n) + " patients"));
+    for (const v of [-down, up]) {
+      svg.append(svgEl("line", { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: "var(--line)" }));
+      svg.append(svgEl("text", { x: L - 6, y: Y(v) + 4, "text-anchor": "end", fill: "var(--muted)", "font-size": 10 }, signed(100 * v, 0)));
+    }
+    diffs[i].forEach((d, j) => {
+      const r = svgEl("rect", { class: "bar", x: x(j) + 0.12 * step, width: 0.76 * step, y: Math.min(Y(d), y0), height: Math.max(0.5, Math.abs(Y(d) - y0)), fill: GC[AL.groups[j]] });
+      r.append(svgEl("title", {}, (name[AL.columns[j]] || AL.columns[j]) + " · " + shortLabel(GROUP_LABEL[AL.groups[j]]) + "\n" +
+        p.name + " : " + pct(AL.by_profile[i][j]) + " de positifs, contre " + pct(AL.cohort[j]) + " dans la cohorte (" + signed(100 * d, 0) + " points)"));
+      svg.append(r);
+    });
+    svg.append(svgEl("line", { x1: L, x2: W - R, y1: y0, y2: y0, stroke: "var(--ink-2)", "stroke-width": 0.8 }));
+  });
+  // allergen names under the last row
+  const yN = H - NAMES + 8;
+  AL.columns.forEach((c, j) => {
+    const cx = x(j) + step / 2;
+    svg.append(svgEl("text", { x: cx, y: yN, "text-anchor": "end", fill: "var(--ink-2)", "font-size": 8.5, transform: "rotate(-60 " + cx + " " + yN + ")" }, c.replace(/_/g, " ")));
+  });
 })();
 
 /* ---------- 2. logistic regression demo ---------- */
