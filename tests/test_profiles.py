@@ -44,3 +44,25 @@ def test_intensity_levels_and_inputs():
     # at most one intensity case per group
     for key in TARGET_GROUPS:
         assert (x[[f"int_{key}_{lv}" for lv in (1, 2, 3)]].sum(axis=1) <= 1).all()
+
+
+def test_profile_allergen_rates():
+    from acc.profiles import profile_allergen_rates
+
+    clinical = {f"clin_{i}": ["9"] * 4 for i in range(13)}  # 15 clinical columns in all
+    df = pd.DataFrame(
+        {
+            "Patient_ID": ["a", "b", "c", "d"],
+            "Chip_Type": ["ISAC_V1", "ISAC_V2", "ALEX", "ALEX"],
+            **clinical,
+            "Bet_v_1": [0.0, 2.0, 5.0, 0.1],
+            "Der_p_1": [1.0, 0.0, 0.4, 0.5],
+        }
+    )
+    out = profile_allergen_rates(df, np.array([0, 0, 1, 1]))
+    # trees come before mites in TARGET_GROUPS
+    assert out["columns"] == ["Bet_v_1", "Der_p_1"]
+    assert out["groups"] == ["tree", "mites"]
+    assert out["cohort"] == [0.5, 0.75]
+    assert out["by_profile"][0] == [0.5, 0.5]
+    assert out["by_profile"][1] == [0.5, 1.0]

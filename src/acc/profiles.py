@@ -30,11 +30,14 @@ from acc.features import (
     SEVERITY_TARGETS,
     TARGET_GROUPS,
     age_band,
+    allergen_group,
     centre_of,
+    common_allergens,
     encode_intensity,
     food_allergy,
     group_intensity,
     n_clinical_known,
+    positivity,
     severity_degrees,
 )
 from acc.modeling import (
@@ -250,6 +253,30 @@ def allergic_profiles(df: pd.DataFrame) -> dict:
         "reference": reference,
         "centroids": [[round(float(v), 4) for v in row] for row in centroids],
         "profiles": profiles,
+        "allergens": profile_allergen_rates(df, labels),
+    }
+
+
+def profile_allergen_rates(df: pd.DataFrame, labels: np.ndarray) -> dict:
+    """Positive rate of each common allergen in each profile and in the whole cohort.
+
+    Restricted to the 91 allergens measured on all three chips, so every patient counts for
+    every bar; columns are ordered by group (TARGET_GROUPS order), then by name. The page draws
+    each profile's rate minus the cohort rate, like the PCA loadings of notebook 02.
+    """
+    order = list(TARGET_GROUPS)
+    columns = sorted(
+        (c for c in common_allergens(df) if allergen_group(c) is not None),
+        key=lambda c: (order.index(allergen_group(c)), c),
+    )
+    positive = positivity(df, columns)
+    return {
+        "columns": columns,
+        "groups": [allergen_group(c) for c in columns],
+        "cohort": [round(float(v), 4) for v in positive.mean()],
+        "by_profile": [
+            [round(float(v), 4) for v in positive[labels == p].mean()] for p in range(N_PROFILES)
+        ],
     }
 
 
