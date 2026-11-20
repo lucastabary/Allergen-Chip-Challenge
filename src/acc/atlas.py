@@ -50,6 +50,7 @@ from acc.features import (
     centre_of,
     clinical_feature_labels,
     encode_clinical,
+    encode_intensity,
     group_columns,
     measured_by_chip,
     n_clinical_known,
@@ -240,13 +241,21 @@ def evaluate_degree(
 
 
 def fit_degree_target(
-    key: str, features: pd.DataFrame, chips: np.ndarray, centres: np.ndarray, degree: pd.Series
+    key: str,
+    features: pd.DataFrame,
+    intensity: pd.DataFrame,
+    chips: np.ndarray,
+    centres: np.ndarray,
+    degree: pd.Series,
 ) -> dict:
-    """Treatment degree (0-3) of one disease from the OTHER clinical answers, age, sex and chip.
+    """Treatment degree (0-3) of one disease from the chip result and the OTHER clinical answers.
 
-    One multinomial logistic regression: it gives the four degree probabilities at once,
-    always coherent, and the page shows the most probable degree. Used for the diseases the
-    user left "not provided" in the form, so it never predicts an answer it was given.
+    Inputs: the 54 intensity cases (18 groups x low/moderate/high), the clinical answers except
+    this disease's own treatment, age, sex and chip. One multinomial logistic regression gives
+    the four degree probabilities at once; the page shows the most probable degree. It is used
+    for the diseases left "not provided", so it never predicts an answer it was given. The same
+    model without the chip result (clinical only), without the clinical answers (IgE only) and
+    with age, sex and chip alone are scored too, to show what each source adds.
     """
     known = degree.notna().to_numpy()
     own = f"{DEGREE_FIELD[key]}_"
@@ -254,10 +263,19 @@ def fit_degree_target(
     age_sex = [c for c in cols if c.startswith("age_") or c in ("male", "female")]
     x_chip = np.stack([(chips == c).astype(int) for c in CHIPS], axis=1)[known]
     y = degree.to_numpy()[known].astype(int)
-    x = np.hstack([features[cols].to_numpy()[known], x_chip])
-    x_base = np.hstack([features[age_sex].to_numpy()[known], x_chip])
+    clinical = features[cols].to_numpy()[known]
+    ige = intensity.to_numpy()[known]
+    base = features[age_sex].to_numpy()[known]
+    x = np.hstack([clinical, ige, x_chip])
     scores = evaluate_degree(x, y, centres[known])
-    baseline = evaluate_degree(x_base, y, centres[known], n_repeats=2)
+    variants = {
+        "clinical": np.hstack([clinical, x_chip]),
+        "ige": np.hstack([base, ige, x_chip]),
+        "age_sex": np.hstack([base, x_chip]),
+    }
+    others = {
+        name: evaluate_degree(xv, y, centres[known], n_repeats=2) for name, xv in variants.items()
+    }
     majority = np.full_like(y, np.bincount(y).argmax())
     model = _multinomial().fit(x, y)
     label, column, mapping = SEVERITY_TARGETS[key]
@@ -268,12 +286,12 @@ def fit_degree_target(
         "codes": dict(mapping),
         "n": int(len(y)),
         "counts": [int((y == k).sum()) for k in range(4)],
-        "features": cols + CHIP_FEATURES,
+        "features": cols + list(intensity.columns) + CHIP_FEATURES,
         "intercept": [round(float(v), 4) for v in model.intercept_],
         "coef": [[round(float(v), 4) for v in row] for row in model.coef_],
         **scores,
-        "f1_age_sex": baseline["f1"],
-        "f1_age_sex_new_centre": baseline["f1_new_centre"],
+        **{f"f1_{name}": v["f1"] for name, v in others.items()},
+        **{f"f1_{name}_new_centre": v["f1_new_centre"] for name, v in others.items()},
         "f1_majority": round(
             float(f1_score(y, majority, average="macro", labels=[0, 1, 2, 3], zero_division=0)), 3
         ),
@@ -281,14 +299,16 @@ def fit_degree_target(
 
 
 def fit_severity(df: pd.DataFrame, n_jobs: int = -1) -> dict:
-    """Degree models for unanswered diseases, and centre-adjusted severity factors."""
+    """Degree models (chip result + other clinical answers) and centre-adjusted severity factors."""
     train = training_patients(df)
     features = encode_clinical(train)
+    intensity = encode_intensity(train)
+    intensity = intensity[[c for c in intensity.columns if c.startswith("int_")]]
     degrees = severity_degrees(train)
     chips = train["Chip_Type"].to_numpy()
     centres = centre_of(train).to_numpy()
     models = Parallel(n_jobs=n_jobs)(
-        delayed(fit_degree_target)(key, features, chips, centres, degrees[key])
+        delayed(fit_degree_target)(key, features, intensity, chips, centres, degrees[key])
         for key in SEVERITY_TARGETS
     )
     return {
@@ -424,6 +444,7 @@ def build_payload(df: pd.DataFrame) -> dict:
     return {
         "meta": {
             "n_patients": int(len(df)),
+            "n_by_chip": [int((df["Chip_Type"] == c).sum()) for c in CHIPS],
             "n_allergens": len(ige),
             "n_groups": len(TARGET_GROUPS),
             "n_excluded": len(EXCLUDED_ALLERGENS),

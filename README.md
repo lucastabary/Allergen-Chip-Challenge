@@ -39,32 +39,32 @@ clinical_cols, ige_cols = split_columns(df)
 ## Interactive page
 
 `reports/atlas/index.html` (built with `uv run acc-atlas`, about 10 minutes) is a self-contained page
-that follows the three parts of the challenge question:
+meant to present the project. It is a narrative in steps; each step shows one algorithm on a small
+example you can play with, then its result on the 4,271 patients:
 
-1. **Allergic profiles.** K-means (k = 8, stable: ARI 0.75) on the IgE profile only: for each of the
-   18 allergen groups, positive or not and its intensity (max IgE on the patient's own chip: low
-   0.3-1, moderate 1-15, high >= 15). Each profile is described by its allergens (heatmap) and by its
-   pathologies and severity, with odds ratios against the "barely sensitized" profile at equal
-   centre, age and sex (Benjamini-Hochberg).
-2. **From the IgE profile to pathologies.** Pick an intensity per group (or load a real patient and
-   compare with what was observed): one logistic regression per pathology (asthma, rhinitis, atopic
-   dermatitis treated or severe, food allergy) returns a probability and the nearest profile. Each
-   row shows three F1: stratified CV (same centres), leave-one-centre-out (a new centre), and the
-   age/sex/chip-only baseline.
-3. **Severity factors.** Centre-adjusted odds ratios (fixed effects) of a severe form or a treatment,
-   three views: one group at a time, all 18 groups in one penalized model (bootstrap CI), and by
-   intensity level (dose-response).
-4. **What clinical answers alone can estimate** (secondary): the earlier simulator from age,
-   symptoms and treatments to the probability of sensitization per group, with the severity degree
-   of the diseases left unanswered.
-5. **Model scores** of that simulator, including the new-centre F1 and the ceiling experiments.
-6. **Allergens.** The 241 IgE columns with their group and positive rate per chip; 235 are grouped,
-   6 are excluded with a reason.
+0. **Data processing.** 241 IgE columns, positivity threshold 0.3 (manufacturer's, in each chip's
+   unit), 235 allergens in 18 biological families (6 excluded), family intensity = highest IgE of
+   the family on the patient's chip, in 4 classes (ISAC bounds 0.3 / 1 / 15).
+1. **K-means** (unsupervised). Animated 2D demo, then the 8 real profiles (36 variables per patient,
+   ARI 0.75 over 5 seeds) and their diseases with centre-adjusted odds ratios.
+2. **Logistic regression.** The real "treated for asthma" model: checked cases, weights, score,
+   sigmoid, threshold. Then F1 for 7 outcomes, same centres and new centre (leave-one-centre-out),
+   against an age/sex/chip baseline also tested on a new centre.
+3. **Multinomial regression.** The real asthma treatment-level model: 4 scores, softmax. The level
+   models now use the chip result (54 intensity cases) plus the other clinical answers; macro F1 is
+   compared with clinical only, chip only, age/sex/chip and the majority level.
+4. **Fixed effects by centre.** Two fictitious hospitals show how mixing centres fakes an effect;
+   then the forest plot of severity factors (one family, all families jointly, by intensity).
+5. **Severity simulator.** Chip result + clinical answers give the nearest profile, the probability
+   of each disease, the most probable treatment level of unanswered diseases, and the significant
+   severity factors of the positive families.
 
-The models run in the browser from exported coefficients. There is no severity label: severity is
-the treatment step (GINA, ARIA, systemic treatment for atopic dermatitis). The allergy diagnosis
-labels used by the 2023 competition (winner F1 about 0.8) are not in the open file, so our F1 are on
-other targets and not comparable.
+Folded annexes: the 241 allergens, the clinical-only sensitization simulator with its scores and
+the ceiling experiments (region, month, C, gradient boosting), method and limits.
+
+There is no severity label: severity is the treatment step (GINA, ARIA, systemic treatment for
+atopic dermatitis). The allergy diagnosis labels used by the 2023 competition (winner F1 about 0.8)
+are not in the open file, so our F1 are on other targets and not comparable.
 
 ## Structure
 

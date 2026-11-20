@@ -51,13 +51,13 @@ Full summary of the challenge (context, question, data warnings, suggested deliv
     `severity_factors()` (per group, joint penalized model with bootstrap CI, dose by intensity
     level), `fit_profile_models()` (IgE profile -> 7 pathology outcomes, F1 same centres and new
     centre, age/sex baseline).
-  - `atlas.py`: builds the deliverable, a self-contained HTML page (profiles, IgE -> pathology
-    prediction, severity factors, then the secondary clinical simulator, its scores and the
-    allergen list). Clinical simulator: per group a pooled logistic regression (chip as an input)
-    and one model per chip, scored by nested CV; `fit_degree_target()` is a multinomial model of a
-    disease's degree from the OTHER clinical answers + chip. `ceiling_experiments()` documents that
-    region, month, C and boosting do not raise the sensitization F1. Run `uv run acc-atlas`
-    (about 10 minutes).
+  - `atlas.py`: builds the deliverable, a self-contained HTML page organized as a narrative by
+    algorithm (data processing, k-means, logistic regression, multinomial regression, centre fixed
+    effects, then a severity simulator; annexes: allergen list, clinical-only simulator, its scores
+    and ceiling experiments). `fit_degree_target()` is a multinomial model of a disease's treatment
+    level from the chip result (54 intensity cases) and the OTHER clinical answers + age/sex/chip,
+    also scored with clinical only, chip only and age/sex/chip. Clinical-only sensitization models
+    (`fit_group`) and `ceiling_experiments()` feed the annexes. Run `uv run acc-atlas` (about 10 min).
   - `resources/atlas_template.html`: page template (French UI); data is inlined at the
     `/*__ATLAS_DATA__*/null` marker. Edit the template, never the generated page.
 - `notebooks/`: exploration. Name them `NN_initials_topic.ipynb` (e.g. `01_lt_eda.ipynb`).
