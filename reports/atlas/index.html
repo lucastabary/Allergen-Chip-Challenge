@@ -63,6 +63,7 @@ header.top { display: flex; flex-direction: column; gap: 12px; }
 .fact b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 section.view { display: flex; flex-direction: column; gap: 14px; }
+[hidden] { display: none !important; }
 .view-head { display: flex; flex-direction: column; gap: 4px; }
 .step { font: 600 12px/1 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
 .view-head p { color: var(--ink-2); max-width: 76ch; }
@@ -296,7 +297,6 @@ details.annex[open] > summary { border-bottom: 1px solid var(--line); }
     <a href="#kmeans"><b>1</b> K-moyennes</a>
     <a href="#logistique"><b>2</b> Régression logistique</a>
     <a href="#multinomiale"><b>3</b> Régression multinomiale</a>
-    <a href="#effets-fixes"><b>4</b> Effets fixes</a>
     <a href="#simulateur" class="star"><b>★</b> Simulateur de sévérité</a>
     <a href="#annexes"><b>+</b> Annexes</a>
   </nav>
@@ -456,7 +456,8 @@ details.annex[open] > summary { border-bottom: 1px solid var(--line); }
 </section>
 
 <!-- 4. fixed effects -->
-<section class="view" id="effets-fixes" aria-labelledby="h-fe">
+<!-- step 4 is not presented any more: kept in the page, hidden (remove `hidden` to show it again) -->
+<section class="view" id="effets-fixes" aria-labelledby="h-fe" hidden>
   <div class="view-head">
     <span class="step">Étape 4 · Régression à effets fixes par centre</span>
     <h2 id="h-fe">Quels allergènes vont de pair avec la sévérité, à hôpital égal ?</h2>
@@ -501,7 +502,7 @@ details.annex[open] > summary { border-bottom: 1px solid var(--line); }
 <!-- simulator -->
 <section class="view" id="simulateur" aria-labelledby="h-sim">
   <div class="view-head">
-    <span class="step">★ Simulateur de sévérité · les quatre étapes réunies</span>
+    <span class="step">★ Simulateur de sévérité · les étapes réunies</span>
     <h2 id="h-sim">Décrivez un patient : profil, maladies, niveau de traitement</h2>
     <p>Saisissez le résultat de puce et ce que l'on sait de la clinique. Chaque bloc de résultat indique l'algorithme qui le produit et sa fiabilité mesurée. Laissez « Non renseigné » ce que vous ignorez : c'est justement ce que le simulateur estime.</p>
   </div>
@@ -524,7 +525,7 @@ details.annex[open] > summary { border-bottom: 1px solid var(--line); }
       <div class="out-block"><span class="tag">K-moyennes</span><div class="score" id="s-profile"></div></div>
       <div class="out-block"><span class="tag">Régression logistique</span><h3>Probabilité de chaque maladie, d'après la puce</h3><div id="s-dis"></div><p class="hint">« Probable » = au-dessus du seuil de décision (trait noir), réglé bas pour ne pas manquer de malades. Une maladie renseignée dans le formulaire n'est pas estimée.</p></div>
       <div class="out-block"><span class="tag">Régression multinomiale</span><h3>Niveau de traitement probable, d'après la puce et la clinique</h3><div id="s-deg"></div></div>
-      <div class="out-block"><span class="tag">Effets fixes</span><h3>Sensibilisations associées à une forme sévère</h3><div id="s-fac"></div></div>
+      <div class="out-block" hidden><span class="tag">Effets fixes</span><h3>Sensibilisations associées à une forme sévère</h3><div id="s-fac"></div></div>
     </div>
   </div>
 </section>
@@ -804,7 +805,7 @@ $("facts").append(
     ...ps.map(p => { const v = p.prevalence[g.key]; return el("td", { class: "c", style: heatBg(v), text: fr(100 * v) + " %" }); })));
   const info = [["Âge médian (ans)", p => fr(p.age_median)], ["Hommes", p => pct(p.male)], ["Familles positives (médiane)", p => fr(p.median_groups)]];
   $("prof-heat").replaceChildren(el("thead", {}, head), el("tbody", {}, ...rows, ...info.map(([l, f]) => el("tr", {}, el("td", { text: l }), ...ps.map(p => el("td", { class: "c", text: f(p) }))))));
-  $("prof-out-lede").textContent = "Part des patients de chaque profil ayant la maladie, parmi ceux pour qui elle est renseignée. Sous le pourcentage : le rapport de cotes par rapport au profil « " + ps[ref].name + " », calculé à hôpital, âge et sexe égaux (étape 4) ; « ns » = non significatif.";
+  $("prof-out-lede").textContent = "Part des patients de chaque profil ayant la maladie, parmi ceux pour qui elle est renseignée. Sous le pourcentage : le rapport de cotes par rapport au profil « " + ps[ref].name + " », calculé à hôpital, âge et sexe égaux (une constante par hôpital) ; « ns » = non significatif.";
   const oh = el("tr", {}, el("th", { text: "Maladie" }), ...ps.map((p, i) => el("th", { class: "p", text: p.name + (i === ref ? " (réf.)" : "") })));
   const orows = OUTK.map(k => el("tr", {}, el("td", { text: OL[k] }), ...ps.map((p, i) => {
     const o = p.outcomes[k], vr = o.vs_reference;
