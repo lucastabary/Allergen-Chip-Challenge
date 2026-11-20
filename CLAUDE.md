@@ -47,7 +47,8 @@ Full summary of the challenge (context, question, data warnings, suggested deliv
   - `modeling.py`: shared logistic-regression helpers (F1-max threshold, nested stratified CV
     `evaluate_group()`, leave-one-centre-out `evaluate_new_centre()`).
   - `profiles.py`: the IgE-first analyses. `allergic_profiles()` (k-means k=8 on flags + intensity,
-    ARI stability, pathologies with centre-adjusted ORs vs the barely-sensitized profile),
+    ARI stability, pathologies with centre-adjusted ORs vs the barely-sensitized profile, and
+    `profile_allergen_rates()`: positive rate of each common allergen per profile, drawn as bars),
     `severity_factors()` (per group, joint penalized model with bootstrap CI, dose by intensity
     level), `fit_profile_models()` (IgE profile -> 7 pathology outcomes, F1 same centres and new
     centre, age/sex baseline).
@@ -60,6 +61,23 @@ Full summary of the challenge (context, question, data warnings, suggested deliv
     (`fit_group`) and `ceiling_experiments()` feed the annexes. Run `uv run acc-atlas` (about 10 min).
   - `resources/atlas_template.html`: page template (French UI); data is inlined at the
     `/*__ATLAS_DATA__*/null` marker. Edit the template, never the generated page.
+  - `predict.py`: clinical targets built from the coded columns (`TARGETS`, with a positive control
+    `adult` and a negative control `shuffled`), nested feature sets (`demo`, `pfam` = positives per
+    protein family, `summary`, `ige` = 91 allergens common to the 3 chips), repeated stratified CV with
+    logistic regression and gradient boosting, Nadeau-Bengio corrected t-tests + BH.
+    `python -m acc.predict run --out runs/x --repeats 10` then `report runs/x`.
+  - `experiments.py`: `screen` (one adjusted logistic per target x allergen, with and without
+    adjustment for polysensitization), `importance` (permutation importance under CV), `transport`
+    (leave-one-region-out).
+  - `score.py`: storage-protein score for food anaphylaxis (number of positive 2S albumins + 11S
+    legumins on the common panel): risk by level, threshold metrics with bootstrap CIs, CV calibration
+    (intercept, slope, ECE), leave-one-region-out calibration. `python -m acc.score --out runs/score`.
+- `relay.toml` + `scripts/chav.sh`: run the heavy jobs on Chav, a remote 12-CPU machine driven by the
+  `relay` agent of Lucas's priism project (reference: `C:\Users\lucas\Projects\priism-cleave\docs\chav-agent.md`).
+  `bash scripts/chav.sh push <branch>` ships a committed branch (signed bundle) and runs the tests there;
+  `bash scripts/chav.sh job MAXMIN runs/x acc/predict run --out runs/x ...` submits a CPU job and pulls
+  its results into `data/processed/runs/x`. Jobs run one at a time; never push while an acc job runs.
+  Only the commands declared in `relay.toml` can run. The data is downloaded on the machine.
 - `notebooks/`: exploration. Name them `NN_initials_topic.ipynb` (e.g. `01_lt_eda.ipynb`).
 - `data/raw/`, `data/processed/`: git-ignored, never commit data.
 - `reports/figures/`: exported figures and deliverables.
